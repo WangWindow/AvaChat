@@ -1,0 +1,160 @@
+<Window
+    x:Class="AvaChat.Client.Views.LoginStatusWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:AvaChat.Client.ViewModels"
+    Title=""
+    Width="360"
+    Height="240"
+    d:DesignHeight="240"
+    d:DesignWidth="360"
+    x:DataType="vm:LoginStatusViewModel"
+    Background="Transparent"
+    CanResize="False"
+    ExtendClientAreaChromeHints="NoChrome"
+    ExtendClientAreaTitleBarHeightHint="32"
+    ExtendClientAreaToDecorationsHint="True"
+    ShowInTaskbar="False"
+    SystemDecorations="BorderOnly"
+    TransparencyLevelHint="AcrylicBlur"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+
+    <Design.DataContext>
+        <vm:LoginStatusViewModel />
+    </Design.DataContext>
+
+    <Grid>
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    MaterialOpacity="0.5"
+                    TintColor="Black"
+                    TintOpacity="1" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+
+        <!--  主要内容区域  -->
+        <Border
+            Background="transparent"
+            BoxShadow="0 4 16 0 #40000000"
+            CornerRadius="12">
+            <Grid>
+                <!--  关闭按钮  -->
+                <Button
+                    Width="24"
+                    Height="24"
+                    Margin="0,8,8,0"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Command="{Binding CancelCommand}"
+                    CornerRadius="12"
+                    Cursor="Hand">
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="10"
+                        FontWeight="Bold"
+                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                        Text="✕" />
+                </Button>
+
+                <!--  内容区域  -->
+                <StackPanel
+                    Margin="32,32,32,32"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Spacing="20">
+
+                    <!--  状态图标  -->
+                    <Border
+                        Width="50"
+                        Height="50"
+                        HorizontalAlignment="Center"
+                        Background="{Binding StatusColor}"
+                        CornerRadius="25"
+                        IsVisible="{Binding !IsConnecting}">
+                        <TextBlock
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontSize="24"
+                            FontWeight="Bold"
+                            Foreground="White"
+                            Text="{Binding StatusIcon}" />
+                    </Border>
+
+                    <!--  连接状态显示  -->
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        IsVisible="{Binding IsConnecting}"
+                        Orientation="Horizontal"
+                        Spacing="12">
+                        <Border
+                            Width="24"
+                            Height="24"
+                            Background="{DynamicResource SystemControlHighlightAccentBrush}"
+                            CornerRadius="12" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="16"
+                            Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                            Text="正在连接服务器..." />
+                    </StackPanel>
+
+                    <!--  状态文本  -->
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        FontSize="18"
+                        FontWeight="SemiBold"
+                        Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                        Text="{Binding StatusMessage}"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap" />
+
+                    <!--  错误详情  -->
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        FontSize="14"
+                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                        IsVisible="{Binding HasErrorDetail}"
+                        Text="{Binding ErrorDetail}"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap" />
+
+                    <!--  按钮区域  -->
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        IsVisible="{Binding ShowRetryButton}"
+                        Orientation="Horizontal"
+                        Spacing="16">
+                        <Button
+                            Padding="20,10"
+                            Background="{DynamicResource SystemControlHighlightAccentBrush}"
+                            Command="{Binding RetryCommand}"
+                            Content="重试"
+                            CornerRadius="8"
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Foreground="White" />
+                        <Button
+                            Padding="20,10"
+                            Background="Transparent"
+                            BorderBrush="{DynamicResource SystemControlHighlightAccentBrush}"
+                            BorderThickness="1"
+                            Command="{Binding CancelCommand}"
+                            Content="取消"
+                            CornerRadius="8"
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Foreground="{DynamicResource SystemControlHighlightAccentBrush}" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

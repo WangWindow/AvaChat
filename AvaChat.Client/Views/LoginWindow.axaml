@@ -1,0 +1,143 @@
+<Window
+    x:Class="AvaChat.Client.Views.LoginWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:AvaChat.Client.ViewModels"
+    Title="AvaChat - 登录"
+    Width="320"
+    Height="450"
+    d:DesignHeight="360"
+    d:DesignWidth="480"
+    x:DataType="vm:LoginViewModel"
+    Background="Transparent"
+    CanResize="False"
+    ExtendClientAreaToDecorationsHint="True"
+    Icon="/Assets/avalonia-logo.ico"
+    TransparencyLevelHint="AcrylicBlur"
+    WindowStartupLocation="CenterScreen"
+    mc:Ignorable="d">
+
+    <Design.DataContext>
+        <vm:LoginViewModel />
+    </Design.DataContext>
+
+    <Grid Margin="30" RowDefinitions="Auto,*,Auto">
+        <!--  顶部 Logo 区域  -->
+        <StackPanel
+            Grid.Row="0"
+            Margin="0,10,0,10"
+            HorizontalAlignment="Center">
+            <Image
+                Width="64"
+                Height="64"
+                Margin="0,0,0,10"
+                Source="/Assets/avalonia-logo.ico" />
+            <TextBlock
+                HorizontalAlignment="Center"
+                Background="Transparent"
+                FontSize="24"
+                FontWeight="Bold"
+                Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                Text="AvaChat" />
+            <TextBlock
+                Margin="0,4,0,0"
+                HorizontalAlignment="Center"
+                Background="Transparent"
+                FontSize="12"
+                Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                Text="实时聊天系统" />
+        </StackPanel>
+
+        <!--  中间登录表单区域  -->
+        <StackPanel Grid.Row="1" Spacing="16">
+
+            <!--  用户号码输入  -->
+            <Border
+                Padding="10,8"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                CornerRadius="8">
+                <TextBox
+                    Padding="0"
+                    HorizontalContentAlignment="Left"
+                    VerticalContentAlignment="Center"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    FontSize="14"
+                    Text="{Binding UserNumber}"
+                    Watermark="请输入8位用户号码" />
+            </Border>
+
+            <!--  密码输入  -->
+            <Border
+                Padding="10,8"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                CornerRadius="8">
+                <TextBox
+                    Padding="0"
+                    HorizontalContentAlignment="Left"
+                    VerticalContentAlignment="Center"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    FontSize="14"
+                    PasswordChar="●"
+                    Text="{Binding Password}"
+                    Watermark="请输入密码" />
+            </Border>
+
+            <!--  记住登录信息  -->
+            <CheckBox
+                Margin="4,0"
+                Content="记住登录信息"
+                FontSize="13"
+                IsChecked="{Binding RememberCredentials}" />
+
+            <!--  登录按钮  -->
+            <Button
+                Height="40"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                Background="{DynamicResource SystemControlHighlightAccentBrush}"
+                Command="{Binding LoginCommand}"
+                Content="登录"
+                CornerRadius="8"
+                FontSize="16"
+                FontWeight="SemiBold"
+                Foreground="White" />
+        </StackPanel>
+
+        <!--  底部按钮区域  -->
+        <Grid
+            Grid.Row="2"
+            Margin="0,20,0,0"
+            Background="Transparent"
+            ColumnDefinitions="*,*">
+
+            <!--  注册按钮  -->
+            <Button
+                Grid.Column="0"
+                Padding="8,4"
+                HorizontalAlignment="Center"
+                Background="Transparent"
+                BorderThickness="0"
+                Command="{Binding RegisterCommand}"
+                Content="注册新账号"
+                FontSize="12"
+                Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+
+            <!--  服务器设置  -->
+            <Button
+                Grid.Column="1"
+                Padding="8,4"
+                HorizontalAlignment="Center"
+                Background="Transparent"
+                BorderThickness="0"
+                Command="{Binding ServerSettingsCommand}"
+                Content="服务器设置"
+                FontSize="12"
+                Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+        </Grid>
+    </Grid>
+</Window>

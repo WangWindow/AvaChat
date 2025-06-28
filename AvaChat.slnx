@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="AvaChat.Client/AvaChat.Client.csproj" />
+  <Project Path="AvaChat.Server/AvaChat.Server.csproj" />
+  <Project Path="AvaChat.Shared/AvaChat.Shared.csproj" />
+</Solution>

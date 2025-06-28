@@ -1,0 +1,60 @@
+<Application
+    x:Class="AvaChat.Client.App"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="using:AvaChat.Client.Converters"
+    xmlns:local="using:AvaChat.Client"
+    RequestedThemeVariant="Default">
+    <!--  "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options.  -->
+
+    <!--  系统托盘图标  -->
+    <TrayIcon.Icons>
+        <TrayIcons>
+            <TrayIcon Icon="/Assets/avalonia-logo.ico" ToolTipText="AvaChat">
+                <TrayIcon.Menu>
+                    <NativeMenu>
+                        <NativeMenuItem Click="ShowWindow_Click" Header="显示主窗口" />
+                        <NativeMenuItem Header="设置">
+                            <NativeMenu>
+                                <NativeMenuItem Click="Profile_Click" Header="个人资料" />
+                                <NativeMenuItem Click="MessageSettings_Click" Header="消息设置" />
+                                <NativeMenuItemSeparator />
+                                <NativeMenuItem Click="ThemeSwitch_Click" Header="主题切换" />
+                            </NativeMenu>
+                        </NativeMenuItem>
+                        <NativeMenuItemSeparator />
+                        <NativeMenuItem Click="Exit_Click" Header="退出" />
+                    </NativeMenu>
+                </TrayIcon.Menu>
+            </TrayIcon>
+        </TrayIcons>
+    </TrayIcon.Icons>
+
+    <Application.DataTemplates>
+        <local:ViewLocator />
+    </Application.DataTemplates>
+
+    <Application.Resources>
+        <!--  全局转换器资源  -->
+        <converters:StatusColorConverter x:Key="StatusColorConverter" />
+        <converters:FirstCharConverter x:Key="FirstCharConverter" />
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+        <converters:NotNullToVisibilityConverter x:Key="NotNullToVisibilityConverter" />
+        <converters:DisplayNameConverter x:Key="DisplayNameConverter" />
+        <converters:RelativeTimeConverter x:Key="RelativeTimeConverter" />
+        <converters:IsCurrentUserConverter x:Key="IsCurrentUserConverter" />
+        <converters:IsNotCurrentUserConverter x:Key="IsNotCurrentUserConverter" />
+        <converters:MessageStatusIconConverter x:Key="MessageStatusIconConverter" />
+        <converters:NavigationBackgroundConverter x:Key="NavigationBackgroundConverter" />
+        <converters:NavigationForegroundConverter x:Key="NavigationForegroundConverter" />
+        <converters:ConnectedColorConverter x:Key="ConnectedColorConverter" />
+        <converters:StatusTextConverter x:Key="StatusTextConverter" />
+        <converters:SignatureOrStatusConverter x:Key="SignatureOrStatusConverter" />
+        <converters:OfflineVisibilityConverter x:Key="OfflineVisibilityConverter" />
+        <converters:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter" />
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+    </Application.Styles>
+</Application>
