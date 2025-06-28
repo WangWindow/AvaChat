@@ -1,0 +1,32 @@
+<Project>
+  <PropertyGroup>
+    <!-- Enable central package management, https://learn.microsoft.com/en-us/nuget/consume-packages/Central-Package-Management -->
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Avalonia UI 相关包 -->
+    <PackageVersion Include="Avalonia" Version="11.3.2" />
+    <PackageVersion Include="Avalonia.Desktop" Version="11.3.2" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="11.3.2" />
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="11.3.2" />
+    <PackageVersion Include="Avalonia.Diagnostics" Version="11.3.2" />
+
+    <!-- MVVM 框架 -->
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+
+    <!-- 数据库相关 -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.6" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.6" />
+
+    <!-- 依赖注入 -->
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.6" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.6" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="9.0.6" />
+
+    <!-- JSON 序列化 -->
+    <PackageVersion Include="System.Text.Json" Version="9.0.6" />
+
+    <!-- 网络通信 -->
+    <PackageVersion Include="System.Net.WebSockets.Client" Version="4.3.2" />
+  </ItemGroup>
+</Project>
