@@ -180,9 +180,6 @@ public partial class LoginStatusViewModel : ObservableObject
             // 调用API
             var api = new AuthApiService(ServerAddress);
             var resp = await api.RegisterAsync(RegisterUserName, RegisterPassword);
-
-            System.Diagnostics.Debug.WriteLine($"[RegisterConfirmAsync] resp = {{ Success = {resp?.Success}, UserId = {resp?.UserId}, Error = {resp?.Error} }}");
-
             if (resp == null)
             {
                 throw new Exception("无法连接服务器");
@@ -241,7 +238,34 @@ public partial class LoginStatusViewModel : ObservableObject
             HasServerSettingsError = true;
             return;
         }
-        // 假设保存成功
+
+        try
+        {
+            var factory = new ClientDbContextFactory();
+            using var db = factory.CreateDbContext([]);
+            var setting = db.ClientSettings.FirstOrDefault();
+            if (setting == null)
+            {
+                db.ClientSettings.Add(
+                    new ClientSetting
+                    {
+                        ServerAddress = ServerAddress
+                    });
+            }
+            else
+            {
+                setting.ServerAddress = ServerAddress;
+                db.ClientSettings.Update(setting);
+            }
+            db.SaveChanges();
+        }
+        catch (Exception ex)
+        {
+            ServerSettingsError = $"保存失败: {ex.Message}";
+            HasServerSettingsError = true;
+            return;
+        }
+
         ShowStatusPanel = true;
         ShowRegisterPanel = false;
         ShowServerSettingsPanel = false;

@@ -5,12 +5,17 @@ public class ClientDbContext(DbContextOptions<ClientDbContext> options) : DbCont
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Friendship> Friendships { get; set; } = null!;
     public DbSet<Message> Messages { get; set; } = null!;
+    public DbSet<ClientSetting> ClientSettings { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
         {
-            optionsBuilder.UseSqlite("Data Source=AvaChat.Client.db");
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var dbDir = Path.Combine(appData, "AvaChat");
+            Directory.CreateDirectory(dbDir);
+            var dbPath = Path.Combine(dbDir, "AvaChat.Client.db");
+            optionsBuilder.UseSqlite($"Data Source={dbPath}");
         }
     }
 
@@ -36,5 +41,7 @@ public class ClientDbContext(DbContextOptions<ClientDbContext> options) : DbCont
                 m.ReceiverId,
                 m.Timestamp,
             });
+
+        modelBuilder.Entity<ClientSetting>();
     }
 }
