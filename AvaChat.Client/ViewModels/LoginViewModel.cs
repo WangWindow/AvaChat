@@ -25,6 +25,18 @@ public partial class LoginViewModel : ViewModelBase
     [ObservableProperty]
     private string _serverAddress = "localhost:8080";
 
+    [ObservableProperty]
+    private bool _isPasswordVisible = false;
+
+    [ObservableProperty]
+    private char _passwordChar = '●';
+
+    [ObservableProperty]
+    private string _passwordVisibilityIcon = "👁";
+
+    [ObservableProperty]
+    private string _passwordVisibilityTooltip = "显示密码";
+
     private readonly ILogger<LoginViewModel> _logger;
 
     public LoginViewModel()
@@ -122,6 +134,15 @@ public partial class LoginViewModel : ViewModelBase
     private void ServerSettings()
     {
         ShowErrorDialog("提示", "服务器设置功能暂未实现");
+    }
+
+    [RelayCommand]
+    private void TogglePasswordVisibility()
+    {
+        IsPasswordVisible = !IsPasswordVisible;
+        PasswordChar = IsPasswordVisible ? '\0' : '●';
+        PasswordVisibilityIcon = IsPasswordVisible ? "🙈" : "👁";
+        PasswordVisibilityTooltip = IsPasswordVisible ? "隐藏密码" : "显示密码";
     }
 
     private async Task SimulateLoginAsync()

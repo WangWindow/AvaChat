@@ -54,37 +54,52 @@
         <StackPanel Grid.Row="1" Spacing="16">
 
             <!--  用户号码输入  -->
-            <Border
-                Padding="10,8"
-                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
-                CornerRadius="8">
-                <TextBox
-                    Padding="0"
-                    HorizontalContentAlignment="Left"
-                    VerticalContentAlignment="Center"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    FontSize="14"
-                    Text="{Binding UserNumber}"
-                    Watermark="请输入8位用户号码" />
-            </Border>
+            <TextBox
+                Margin="0,4,0,0"
+                Padding="12,8"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                Background="Transparent"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                FontSize="14"
+                Text="{Binding UserNumber}"
+                Watermark="请输入8位用户号码" />
 
             <!--  密码输入  -->
-            <Border
-                Padding="10,8"
-                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
-                CornerRadius="8">
-                <TextBox
-                    Padding="0"
-                    HorizontalContentAlignment="Left"
-                    VerticalContentAlignment="Center"
-                    Background="Transparent"
-                    BorderThickness="0"
+            <TextBox
+                Margin="0,4,0,0"
+                Padding="12,8"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                Background="Transparent"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                FontSize="14"
+                PasswordChar="{Binding PasswordChar}"
+                Text="{Binding Password}"
+                Watermark="请输入密码" />
+
+            <!--  密码可见性切换按钮  -->
+            <Button
+                Width="32"
+                Height="32"
+                Margin="0,-48,8,0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Background="Transparent"
+                BorderThickness="0"
+                Command="{Binding TogglePasswordVisibilityCommand}"
+                CornerRadius="16"
+                ToolTip.Tip="{Binding PasswordVisibilityTooltip}">
+                <TextBlock
+                    FontFamily="Segoe MDL2 Assets"
                     FontSize="14"
-                    PasswordChar="●"
-                    Text="{Binding Password}"
-                    Watermark="请输入密码" />
-            </Border>
+                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                    Text="{Binding PasswordVisibilityIcon}" />
+            </Button>
 
             <!--  记住登录信息  -->
             <CheckBox
