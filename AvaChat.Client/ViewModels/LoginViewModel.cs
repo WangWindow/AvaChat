@@ -50,6 +50,7 @@ public partial class LoginViewModel : ViewModelBase
         var statusWindow = new LoginStatusWindow();
         var statusViewModel = new LoginStatusViewModel();
         statusWindow.DataContext = statusViewModel;
+        statusViewModel.ServerAddress = ServerAddress;
 
         // 获取当前登录窗口作为父窗口
         var currentWindow = GetCurrentLoginWindow();
@@ -74,21 +75,34 @@ public partial class LoginViewModel : ViewModelBase
             // 显示连接状态
             statusViewModel.ShowConnecting();
 
-            // 登录成功
-            await statusViewModel.ShowSuccessAsync();
-
-            // 保存登录信息
-            if (RememberCredentials)
+            // 调用API
+            var api = new AuthApiService(ServerAddress);
+            var resp = await api.LoginAsync(UserId, Password);
+            if (resp == null)
             {
-                SaveCredentials();
+                throw new Exception("无法连接服务器");
             }
+            if (resp.Success)
+            {
+                await statusViewModel.ShowSuccessAsync();
 
-            // 打开主窗口
-            var mainWindow = new MainWindow();
-            mainWindow.Show();
+                // 保存登录信息
+                if (RememberCredentials)
+                {
+                    SaveCredentials();
+                }
 
-            // 关闭登录窗口
-            CloseCurrentLoginWindow();
+                // 打开主窗口
+                var mainWindow = new MainWindow();
+                mainWindow.Show();
+
+                // 关闭登录窗口
+                CloseCurrentLoginWindow();
+            }
+            else
+            {
+                statusViewModel.ShowError("登录失败", resp.Error ?? "登录失败");
+            }
         }
         catch (Exception ex)
         {
@@ -103,7 +117,14 @@ public partial class LoginViewModel : ViewModelBase
         var statusViewModel = new LoginStatusViewModel();
         statusWindow.DataContext = statusViewModel;
         statusWindow.Title = "注册新账号";
+        statusViewModel.ServerAddress = ServerAddress;
         statusViewModel.ShowRegisterPanelView();
+
+        // 注册成功后自动填充UserId
+        statusViewModel.RegisterSuccess += (s, userId) =>
+        {
+            UserId = userId;
+        };
 
         // 订阅关闭事件
         statusViewModel.WindowCloseRequested += (s, e) => statusWindow.Close();

@@ -13,6 +13,7 @@ global using System.Text.Json;
 global using System.Threading;
 global using System.Threading.Tasks;
 global using System.Windows.Input;
+global using AvaChat.Client.Models;
 global using AvaChat.Client.ViewModels;
 global using AvaChat.Client.Views;
 global using AvaChat.Shared.Models;

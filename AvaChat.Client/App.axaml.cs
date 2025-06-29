@@ -9,6 +9,8 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        Task.Run(Start);
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit.
@@ -38,6 +40,16 @@ public partial class App : Application
         {
             BindingPlugins.DataValidators.Remove(plugin);
         }
+    }
+
+    private static void Start()
+    {
+        // TODO
+        var options = new DbContextOptionsBuilder<ClientDbContext>()
+            .UseSqlite("Data Source=AvaChat.Client.db")
+            .Options;
+        using var db = new ClientDbContext(options);
+        db.Database.EnsureCreated();
     }
 
     #region 托盘图标事件处理

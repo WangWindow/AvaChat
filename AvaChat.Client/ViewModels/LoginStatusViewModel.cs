@@ -156,26 +156,78 @@ public partial class LoginStatusViewModel : ObservableObject
     /// 注册确认命令
     /// </summary>
     [RelayCommand]
-    private void RegisterConfirm()
+    private async Task RegisterConfirmAsync()
     {
-        // TODO: 实现注册逻辑，成功后关闭窗口或切回登录状态，失败则显示错误
         if (string.IsNullOrWhiteSpace(RegisterUserName) || string.IsNullOrWhiteSpace(RegisterPassword))
         {
             RegisterError = "用户名和密码不能为空";
             HasRegisterError = true;
             return;
         }
-        // 假设注册成功
-        ShowStatusPanel = true;
-        ShowRegisterPanel = false;
-        ShowServerSettingsPanel = false;
-        StatusMessage = "注册成功，请登录";
-        StatusIcon = "✓";
-        StatusColor = new SolidColorBrush(Color.FromRgb(34, 197, 94));
-        IsConnecting = false;
-        ShowRetryButton = false;
-        HasErrorDetail = false;
+
+        try
+        {
+            ShowStatusPanel = true;
+            ShowRegisterPanel = false;
+            ShowServerSettingsPanel = false;
+            IsConnecting = true;
+            StatusMessage = "正在注册...";
+            StatusIcon = string.Empty;
+            StatusColor = null;
+            ShowRetryButton = false;
+            HasErrorDetail = false;
+
+            // 调用API
+            var api = new AuthApiService(ServerAddress);
+            var resp = await api.RegisterAsync(RegisterUserName, RegisterPassword);
+
+            System.Diagnostics.Debug.WriteLine($"[RegisterConfirmAsync] resp = {{ Success = {resp?.Success}, UserId = {resp?.UserId}, Error = {resp?.Error} }}");
+
+            if (resp == null)
+            {
+                throw new Exception("无法连接服务器");
+            }
+            if (resp.Success)
+            {
+                // 注册成功，切回登录面板并自动填充UserId
+                StatusMessage = $"注册成功，分配号码：{resp.UserId}";
+                StatusIcon = "✓";
+                StatusColor = new SolidColorBrush(Color.FromRgb(34, 197, 94));
+                IsConnecting = false;
+                ShowRetryButton = false;
+                HasErrorDetail = false;
+
+                // 通知LoginViewModel自动填充UserId
+                RegisterSuccess?.Invoke(this, resp.UserId ?? string.Empty);
+
+                // 注册成功后1秒自动关闭窗口
+                await Task.Delay(1000);
+                WindowCloseRequested?.Invoke(this, EventArgs.Empty);
+            }
+            else
+            {
+                // 注册失败，回到注册面板并显示错误
+                ShowStatusPanel = false;
+                ShowRegisterPanel = true;
+                ShowServerSettingsPanel = false;
+                RegisterError = resp.Error ?? "注册失败";
+                HasRegisterError = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowStatusPanel = false;
+            ShowRegisterPanel = true;
+            ShowServerSettingsPanel = false;
+            RegisterError = ex.Message;
+            HasRegisterError = true;
+        }
     }
+
+    /// <summary>
+    /// 注册成功事件（用于回传UserId给LoginViewModel自动填充）
+    /// </summary>
+    public event EventHandler<string>? RegisterSuccess;
 
     /// <summary>
     /// 保存服务器设置命令

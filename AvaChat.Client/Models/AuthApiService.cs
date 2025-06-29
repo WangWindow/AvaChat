@@ -1,21 +1,68 @@
 namespace AvaChat.Client.Models;
 
-public class AuthApiService(string baseUrl)
+public class AuthApiService
 {
-    private readonly string _baseUrl = baseUrl.TrimEnd('/');
+    private readonly string _baseUrl;
     private readonly HttpClient _httpClient = new();
+
+    public AuthApiService(string baseUrl)
+    {
+        _baseUrl = NormalizeServerAddress(baseUrl).TrimEnd('/');
+    }
+    /// <summary>
+    /// 补全ServerAddress前缀
+    /// </summary>
+    private static string NormalizeServerAddress(string addr)
+    {
+        if (string.IsNullOrWhiteSpace(addr)) return "http://localhost:5000";
+        if (!addr.StartsWith("http://") && !addr.StartsWith("https://"))
+            return "http://" + addr;
+        return addr;
+    }
 
     public async Task<RegisterResponse?> RegisterAsync(string userName, string password)
     {
-        var req = new RegisterRequest { UserName = userName, Password = password };
-        var resp = await _httpClient.PostAsJsonAsync(_baseUrl + "/api/register", req);
-        return await resp.Content.ReadFromJsonAsync<RegisterResponse>();
+        var req = new RegisterRequest
+        {
+            UserName = userName,
+            Password = password
+        };
+        var url = _baseUrl + "/api/auth/register";
+        var resp = await _httpClient.PostAsJsonAsync(url, req);
+        var content = await resp.Content.ReadAsStringAsync();
+        Console.WriteLine($"[RegisterAsync] url={url}, status={resp.StatusCode}, content={content}");
+        if (!resp.IsSuccessStatusCode)
+            throw new Exception($"API错误: {resp.StatusCode}, 内容: {content}");
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<RegisterResponse>(content);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"反序列化失败: {ex.Message}, 原始内容: {content}");
+        }
     }
 
     public async Task<LoginResponse?> LoginAsync(string userId, string password)
     {
-        var req = new LoginRequest { UserId = userId, Password = password };
-        var resp = await _httpClient.PostAsJsonAsync(_baseUrl + "/api/login", req);
-        return await resp.Content.ReadFromJsonAsync<LoginResponse>();
+        var req = new LoginRequest
+        {
+            UserId = userId,
+            Password = password
+        };
+        var url = _baseUrl + "/api/auth/login";
+        var resp = await _httpClient.PostAsJsonAsync(url, req);
+        var content = await resp.Content.ReadAsStringAsync();
+        Console.WriteLine($"[LoginAsync] url={url}, status={resp.StatusCode}, content={content}");
+        if (!resp.IsSuccessStatusCode)
+            throw new Exception($"API错误: {resp.StatusCode}, 内容: {content}");
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<LoginResponse>(content);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"反序列化失败: {ex.Message}, 原始内容: {content}");
+        }
     }
 }

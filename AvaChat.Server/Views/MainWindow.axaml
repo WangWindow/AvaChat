@@ -10,6 +10,8 @@
     d:DesignWidth="900"
     x:DataType="vm:MainWindowViewModel"
     Icon="/Assets/avalonia-logo.ico"
+    TransparencyLevelHint="AcrylicBlur"
+    WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
 
     <Design.DataContext>
@@ -17,12 +19,22 @@
     </Design.DataContext>
 
     <Grid ColumnDefinitions="220,10,*" RowDefinitions="*">
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    MaterialOpacity="0.5"
+                    TintColor="Black"
+                    TintOpacity="1" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+
         <!--  在线用户列表  -->
         <Border
             Grid.Column="0"
             Margin="10"
-            Background="#FFF"
-            BoxShadow="2 2 8 0 #888"
+            Background="transparent"
+            BorderThickness="1"
             CornerRadius="8">
             <StackPanel>
                 <TextBlock
@@ -33,7 +45,7 @@
                 <ListBox ItemsSource="{Binding OnlineUsers}" SelectedItem="{Binding SelectedUser}">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding}" />
+                            <TextBlock Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" Text="{Binding}" />
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
@@ -49,12 +61,12 @@
             <Border
                 Margin="0,0,0,10"
                 Padding="10"
-                Background="#F8F8F8"
                 BoxShadow="2 2 8 0 #CCC"
                 CornerRadius="8">
                 <ScrollViewer>
                     <TextBlock
                         FontSize="15"
+                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
                         Text="{Binding SystemMessages}"
                         TextWrapping="Wrap" />
                 </ScrollViewer>
@@ -66,6 +78,7 @@
                 Spacing="8">
                 <TextBox
                     Width="500"
+                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
                     Text="{Binding MessageToSend, Mode=TwoWay}"
                     Watermark="输入系统消息..." />
                 <Button Command="{Binding SendSystemMessageCommand}" Content="发送" />

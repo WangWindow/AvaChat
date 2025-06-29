@@ -1,9 +1,9 @@
 
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 namespace AvaChat.Server;
 
 public partial class App : Application
@@ -16,7 +16,7 @@ public partial class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         // 启动Web API服务（后台线程）
-        Task.Run(() => StartWebApi());
+        Task.Run(Start);
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -32,12 +32,13 @@ public partial class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
-    private static void StartWebApi()
+    private static void Start()
     {
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddDbContext<ServerDbContext>();
         builder.Services.AddControllers();
         var app = builder.Build();
+
 
         app.MapControllers();
         app.Run("http://localhost:5000");
@@ -46,8 +47,9 @@ public partial class App : Application
     private void DisableAvaloniaDataAnnotationValidation()
     {
         // Get an array of plugins to remove
-        var dataValidationPluginsToRemove =
-            BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToArray();
+        var dataValidationPluginsToRemove = BindingPlugins
+            .DataValidators.OfType<DataAnnotationsValidationPlugin>()
+            .ToArray();
 
         // remove each entry found
         foreach (var plugin in dataValidationPluginsToRemove)
