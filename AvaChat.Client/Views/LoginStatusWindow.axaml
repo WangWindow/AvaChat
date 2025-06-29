@@ -70,88 +70,139 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Spacing="20">
+                    <!--  登录/状态/错误区域  -->
+                    <StackPanel IsVisible="{Binding ShowStatusPanel}">
+                        <!--  状态图标  -->
+                        <Border
+                            Width="50"
+                            Height="50"
+                            HorizontalAlignment="Center"
+                            Background="{Binding StatusColor}"
+                            CornerRadius="25"
+                            IsVisible="{Binding !IsConnecting}">
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontSize="24"
+                                FontWeight="Bold"
+                                Foreground="White"
+                                Text="{Binding StatusIcon}" />
+                        </Border>
 
-                    <!--  状态图标  -->
-                    <Border
-                        Width="50"
-                        Height="50"
-                        HorizontalAlignment="Center"
-                        Background="{Binding StatusColor}"
-                        CornerRadius="25"
-                        IsVisible="{Binding !IsConnecting}">
+                        <!--  连接状态显示  -->
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            IsVisible="{Binding IsConnecting}"
+                            Orientation="Horizontal"
+                            Spacing="12">
+                            <Border
+                                Width="24"
+                                Height="24"
+                                Background="{DynamicResource SystemControlHighlightAccentBrush}"
+                                CornerRadius="12" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontSize="16"
+                                Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                Text="正在连接服务器..." />
+                        </StackPanel>
+
+                        <!--  状态文本  -->
                         <TextBlock
                             HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            FontSize="24"
-                            FontWeight="Bold"
-                            Foreground="White"
-                            Text="{Binding StatusIcon}" />
-                    </Border>
+                            FontSize="18"
+                            FontWeight="SemiBold"
+                            Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                            Text="{Binding StatusMessage}"
+                            TextAlignment="Center"
+                            TextWrapping="Wrap" />
 
-                    <!--  连接状态显示  -->
-                    <StackPanel
-                        HorizontalAlignment="Center"
-                        IsVisible="{Binding IsConnecting}"
-                        Orientation="Horizontal"
-                        Spacing="12">
-                        <Border
-                            Width="24"
-                            Height="24"
-                            Background="{DynamicResource SystemControlHighlightAccentBrush}"
-                            CornerRadius="12" />
+                        <!--  错误详情  -->
                         <TextBlock
-                            VerticalAlignment="Center"
-                            FontSize="16"
+                            HorizontalAlignment="Center"
+                            FontSize="14"
                             Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                            Text="正在连接服务器..." />
+                            IsVisible="{Binding HasErrorDetail}"
+                            Text="{Binding ErrorDetail}"
+                            TextAlignment="Center"
+                            TextWrapping="Wrap" />
+
+                        <!--  按钮区域  -->
+                        <StackPanel
+                            Margin="0,16,0,0"
+                            HorizontalAlignment="Center"
+                            IsVisible="{Binding ShowRetryButton}"
+                            Orientation="Horizontal"
+                            Spacing="16">
+                            <Button
+                                Padding="20,10"
+                                Background="{DynamicResource SystemControlHighlightAccentBrush}"
+                                Command="{Binding RetryCommand}"
+                                Content="重试"
+                                CornerRadius="8"
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Foreground="White" />
+                            <Button
+                                Padding="20,10"
+                                Background="Transparent"
+                                BorderBrush="{DynamicResource SystemControlHighlightAccentBrush}"
+                                BorderThickness="1"
+                                Command="{Binding CancelCommand}"
+                                Content="取消"
+                                CornerRadius="8"
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Foreground="{DynamicResource SystemControlHighlightAccentBrush}" />
+                        </StackPanel>
                     </StackPanel>
 
-                    <!--  状态文本  -->
-                    <TextBlock
-                        HorizontalAlignment="Center"
-                        FontSize="18"
-                        FontWeight="SemiBold"
-                        Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
-                        Text="{Binding StatusMessage}"
-                        TextAlignment="Center"
-                        TextWrapping="Wrap" />
-
-                    <!--  错误详情  -->
-                    <TextBlock
-                        HorizontalAlignment="Center"
-                        FontSize="14"
-                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                        IsVisible="{Binding HasErrorDetail}"
-                        Text="{Binding ErrorDetail}"
-                        TextAlignment="Center"
-                        TextWrapping="Wrap" />
-
-                    <!--  按钮区域  -->
-                    <StackPanel
-                        HorizontalAlignment="Center"
-                        IsVisible="{Binding ShowRetryButton}"
-                        Orientation="Horizontal"
-                        Spacing="16">
-                        <Button
-                            Padding="20,10"
-                            Background="{DynamicResource SystemControlHighlightAccentBrush}"
-                            Command="{Binding RetryCommand}"
-                            Content="重试"
-                            CornerRadius="8"
-                            FontSize="14"
+                    <!--  注册区域  -->
+                    <StackPanel IsVisible="{Binding ShowRegisterPanel}" Spacing="12">
+                        <TextBlock
+                            HorizontalAlignment="Center"
+                            FontSize="18"
                             FontWeight="SemiBold"
-                            Foreground="White" />
-                        <Button
-                            Padding="20,10"
-                            Background="Transparent"
-                            BorderBrush="{DynamicResource SystemControlHighlightAccentBrush}"
-                            BorderThickness="1"
-                            Command="{Binding CancelCommand}"
-                            Content="取消"
-                            CornerRadius="8"
-                            FontSize="14"
+                            Text="注册新账号" />
+                        <TextBox Text="{Binding RegisterUserName}" Watermark="用户名" />
+                        <TextBox
+                            PasswordChar="●"
+                            Text="{Binding RegisterPassword}"
+                            Watermark="密码" />
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <Button Command="{Binding RegisterConfirmCommand}" Content="注册" />
+                            <Button Command="{Binding CancelCommand}" Content="取消" />
+                        </StackPanel>
+                        <TextBlock
+                            FontSize="12"
+                            Foreground="Red"
+                            IsVisible="{Binding HasRegisterError}"
+                            Text="{Binding RegisterError}" />
+                    </StackPanel>
+
+                    <!--  服务器设置区域  -->
+                    <StackPanel IsVisible="{Binding ShowServerSettingsPanel}" Spacing="12">
+                        <TextBlock
+                            HorizontalAlignment="Center"
+                            FontSize="18"
                             FontWeight="SemiBold"
-                            Foreground="{DynamicResource SystemControlHighlightAccentBrush}" />
+                            Text="服务器设置" />
+                        <TextBox Text="{Binding ServerAddress}" Watermark="服务器地址:端口" />
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <Button Command="{Binding SaveServerSettingsCommand}" Content="保存" />
+                            <Button Command="{Binding CancelCommand}" Content="取消" />
+                        </StackPanel>
+                        <TextBlock
+                            FontSize="12"
+                            Foreground="Red"
+                            IsVisible="{Binding HasServerSettingsError}"
+                            Text="{Binding ServerSettingsError}" />
                     </StackPanel>
                 </StackPanel>
             </Grid>

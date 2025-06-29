@@ -64,7 +64,7 @@
                 BorderThickness="1"
                 CornerRadius="8"
                 FontSize="14"
-                Text="{Binding UserNumber}"
+                Text="{Binding UserId}"
                 Watermark="请输入8位用户号码" />
 
             <!--  密码输入  -->

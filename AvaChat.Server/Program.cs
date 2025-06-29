@@ -1,7 +1,4 @@
-﻿using Avalonia;
-using System;
-
-namespace AvaChat.Server;
+﻿namespace AvaChat.Server;
 
 sealed class Program
 {

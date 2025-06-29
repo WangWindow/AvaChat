@@ -14,106 +14,8 @@
         <vm:ChatViewModel />
     </Design.DataContext>
 
-    <Grid RowDefinitions="Auto,*,Auto">
-
-        <!--  顶部聊天头部  -->
-        <Border
-            Grid.Row="0"
-            Padding="20,12"
-            Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
-            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-            BorderThickness="0,0,0,1">
-
-            <Grid ColumnDefinitions="Auto,*,Auto" IsVisible="{Binding CurrentFriend, Converter={StaticResource NotNullToVisibilityConverter}}">
-
-                <!--  好友头像和状态  -->
-                <Grid
-                    Grid.Column="0"
-                    Width="40"
-                    Height="40">
-                    <Border
-                        Width="40"
-                        Height="40"
-                        Background="{DynamicResource SystemControlHighlightAccentBrush}"
-                        CornerRadius="20">
-                        <TextBlock
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            FontSize="16"
-                            FontWeight="Bold"
-                            Foreground="White"
-                            Text="{Binding CurrentFriend.Nickname, Converter={StaticResource FirstCharConverter}}" />
-                    </Border>
-
-                    <Border
-                        Width="12"
-                        Height="12"
-                        Margin="0,0,-2,-2"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Bottom"
-                        Background="{Binding CurrentFriend.Status, Converter={StaticResource StatusColorConverter}}"
-                        BorderBrush="White"
-                        BorderThickness="2"
-                        CornerRadius="6" />
-                </Grid>
-
-                <!--  好友信息  -->
-                <StackPanel
-                    Grid.Column="1"
-                    Margin="16,0"
-                    VerticalAlignment="Center"
-                    Spacing="2">
-                    <TextBlock
-                        FontSize="16"
-                        FontWeight="SemiBold"
-                        Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
-                        Text="{Binding CurrentFriend.Remark, Converter={StaticResource DisplayNameConverter}, ConverterParameter={Binding CurrentFriend.Nickname}}" />
-                    <TextBlock
-                        FontSize="12"
-                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                        Text="{Binding StatusText}" />
-                </StackPanel>
-
-                <!--  操作按钮  -->
-                <StackPanel
-                    Grid.Column="2"
-                    Orientation="Horizontal"
-                    Spacing="8">
-                    <Button
-                        Width="32"
-                        Height="32"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        Command="{Binding ViewFriendProfileCommand}"
-                        ToolTip.Tip="查看资料">
-                        <Path
-                            Width="16"
-                            Height="16"
-                            Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-                            Fill="{DynamicResource SystemControlForegroundBaseHighBrush}" />
-                    </Button>
-
-                    <Button
-                        Width="32"
-                        Height="32"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        Command="{Binding ClearHistoryCommand}"
-                        ToolTip.Tip="清空聊天记录">
-                        <Path
-                            Width="16"
-                            Height="16"
-                            Data="M19 4h-3.5l-1-1h-5l-1 1H5v2h14V4zM6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12z"
-                            Fill="{DynamicResource SystemControlForegroundBaseHighBrush}" />
-                    </Button>
-                </StackPanel>
-
-            </Grid>
-        </Border>
-
-        <!--  中间消息列表  -->
-        <Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundChromeLowBrush}">
-
+    <Grid RowDefinitions="*,Auto">
+        <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundChromeLowBrush}">
             <Grid>
                 <!--  未选择好友时的提示  -->
                 <StackPanel
@@ -121,12 +23,8 @@
                     VerticalAlignment="Center"
                     IsVisible="{Binding CurrentFriend, Converter={StaticResource NullToVisibilityConverter}}"
                     Spacing="16">
-                    <Path
-                        Width="64"
-                        Height="64"
-                        Data="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"
-                        Fill="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
                     <TextBlock
+                        HorizontalAlignment="Center"
                         FontSize="16"
                         Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
                         Text="选择一个好友开始聊天" />
@@ -155,18 +53,13 @@
                                         Padding="12,8"
                                         Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
                                         CornerRadius="12,12,12,4"
-                                        IsVisible="{Binding SenderNumber, Converter={StaticResource IsNotCurrentUserConverter}}">
+                                        IsVisible="{Binding SenderId, Converter={StaticResource IsNotCurrentUserConverter}}">
                                         <StackPanel Spacing="4">
                                             <TextBlock
                                                 FontSize="14"
                                                 Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
                                                 Text="{Binding Content}"
                                                 TextWrapping="Wrap" />
-                                            <TextBlock
-                                                HorizontalAlignment="Left"
-                                                FontSize="10"
-                                                Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                                                Text="{Binding SentTime, StringFormat='{}{0:HH:mm}'}" />
                                         </StackPanel>
                                     </Border>
 
@@ -177,7 +70,7 @@
                                         Padding="12,8"
                                         Background="{DynamicResource SystemControlHighlightAccentBrush}"
                                         CornerRadius="12,12,4,12"
-                                        IsVisible="{Binding SenderNumber, Converter={StaticResource IsCurrentUserConverter}}">
+                                        IsVisible="{Binding SenderId, Converter={StaticResource IsCurrentUserConverter}}">
                                         <StackPanel Spacing="4">
                                             <TextBlock
                                                 FontSize="14"
@@ -189,13 +82,6 @@
                                                     <ColumnDefinition Width="*" />
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
-
-                                                <TextBlock
-                                                    Grid.Column="0"
-                                                    HorizontalAlignment="Right"
-                                                    FontSize="10"
-                                                    Foreground="#CCFFFFFF"
-                                                    Text="{Binding SentTime, StringFormat='{}{0:HH:mm}'}" />
 
                                                 <!--  消息状态图标  -->
                                                 <Path
@@ -218,7 +104,7 @@
 
         <!--  底部输入区域  -->
         <Border
-            Grid.Row="2"
+            Grid.Row="1"
             Padding="20,12"
             Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
             BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
@@ -226,42 +112,6 @@
             IsVisible="{Binding CurrentFriend, Converter={StaticResource NotNullToVisibilityConverter}}">
 
             <Grid RowDefinitions="Auto,Auto">
-
-                <!--  工具栏  -->
-                <StackPanel
-                    Grid.Row="0"
-                    Margin="0,0,0,8"
-                    Orientation="Horizontal"
-                    Spacing="8">
-                    <Button
-                        Width="32"
-                        Height="32"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        Command="{Binding SelectEmojiCommand}"
-                        ToolTip.Tip="表情">
-                        <Path
-                            Width="16"
-                            Height="16"
-                            Data="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"
-                            Fill="{DynamicResource SystemControlForegroundBaseHighBrush}" />
-                    </Button>
-
-                    <Button
-                        Width="32"
-                        Height="32"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        Command="{Binding SendFileCommand}"
-                        ToolTip.Tip="发送文件">
-                        <Path
-                            Width="16"
-                            Height="16"
-                            Data="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"
-                            Fill="{DynamicResource SystemControlForegroundBaseHighBrush}" />
-                    </Button>
-                </StackPanel>
-
                 <!--  输入框和发送按钮  -->
                 <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
 
@@ -335,11 +185,8 @@
                             </Border>
                         </Grid>
                     </Button>
-
                 </Grid>
             </Grid>
         </Border>
-
     </Grid>
-
 </UserControl>

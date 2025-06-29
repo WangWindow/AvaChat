@@ -1,13 +1,7 @@
-using System;
-using AvaChat.Client.ViewModels;
-using Avalonia.Controls;
-using Avalonia.Controls.Templates;
-
 namespace AvaChat.Client;
 
 public class ViewLocator : IDataTemplate
 {
-
     public Control? Build(object? param)
     {
         if (param is null)

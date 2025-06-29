@@ -16,10 +16,11 @@ public partial class App : Application
             DisableAvaloniaDataAnnotationValidation();
 
             // 启动时显示登录窗口而不是主窗口
-            desktop.MainWindow = new LoginWindow
-            {
-                DataContext = new LoginViewModel(),
-            };
+            desktop.MainWindow = new LoginWindow { DataContext = new LoginViewModel() };
+            // desktop.MainWindow = new MainWindow
+            // {
+            //     DataContext = new MainWindowViewModel()
+            // };
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -28,8 +29,9 @@ public partial class App : Application
     private void DisableAvaloniaDataAnnotationValidation()
     {
         // Get an array of plugins to remove
-        var dataValidationPluginsToRemove =
-            BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToArray();
+        var dataValidationPluginsToRemove = BindingPlugins
+            .DataValidators.OfType<DataAnnotationsValidationPlugin>()
+            .ToArray();
 
         // remove each entry found
         foreach (var plugin in dataValidationPluginsToRemove)
@@ -92,9 +94,8 @@ public partial class App : Application
     private void ThemeSwitch_Click(object? sender, EventArgs e)
     {
         // 切换主题
-        RequestedThemeVariant = RequestedThemeVariant == Avalonia.Styling.ThemeVariant.Light
-            ? Avalonia.Styling.ThemeVariant.Dark
-            : Avalonia.Styling.ThemeVariant.Light;
+        RequestedThemeVariant =
+            RequestedThemeVariant == ThemeVariant.Light ? ThemeVariant.Dark : ThemeVariant.Light;
     }
 
     /// <summary>

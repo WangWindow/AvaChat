@@ -40,17 +40,9 @@
         <converters:FirstCharConverter x:Key="FirstCharConverter" />
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
         <converters:NotNullToVisibilityConverter x:Key="NotNullToVisibilityConverter" />
-        <converters:DisplayNameConverter x:Key="DisplayNameConverter" />
-        <converters:RelativeTimeConverter x:Key="RelativeTimeConverter" />
         <converters:IsCurrentUserConverter x:Key="IsCurrentUserConverter" />
         <converters:IsNotCurrentUserConverter x:Key="IsNotCurrentUserConverter" />
         <converters:MessageStatusIconConverter x:Key="MessageStatusIconConverter" />
-        <converters:NavigationBackgroundConverter x:Key="NavigationBackgroundConverter" />
-        <converters:NavigationForegroundConverter x:Key="NavigationForegroundConverter" />
-        <converters:ConnectedColorConverter x:Key="ConnectedColorConverter" />
-        <converters:StatusTextConverter x:Key="StatusTextConverter" />
-        <converters:SignatureOrStatusConverter x:Key="SignatureOrStatusConverter" />
-        <converters:OfflineVisibilityConverter x:Key="OfflineVisibilityConverter" />
         <converters:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter" />
     </Application.Resources>
 

@@ -1,12 +1,9 @@
-using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data.Core;
-using Avalonia.Data.Core.Plugins;
-using System.Linq;
-using Avalonia.Markup.Xaml;
-using AvaChat.Server.ViewModels;
-using AvaChat.Server.Views;
 
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Http;
+using System.Threading.Tasks;
 namespace AvaChat.Server;
 
 public partial class App : Application
@@ -18,9 +15,12 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        // 启动Web API服务（后台线程）
+        Task.Run(() => StartWebApi());
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
+            // Avoid duplicate validations from both Avalonia and the CommunityToolkit.
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
             desktop.MainWindow = new MainWindow
@@ -30,6 +30,17 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static void StartWebApi()
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.Services.AddDbContext<ServerDbContext>();
+        builder.Services.AddControllers();
+        var app = builder.Build();
+
+        app.MapControllers();
+        app.Run("http://localhost:5000");
     }
 
     private void DisableAvaloniaDataAnnotationValidation()

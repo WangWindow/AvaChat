@@ -38,11 +38,13 @@
                     BorderThickness="0"
                     Command="{Binding AddFriendCommand}"
                     ToolTip.Tip="添加好友">
-                    <Path
-                        Width="16"
-                        Height="16"
-                        Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
-                        Fill="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="24"
+                        FontWeight="Bold"
+                        Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                        Text="+" />
                 </Button>
             </Grid>
         </Border>
@@ -131,15 +133,6 @@
                                     <Border.ContextMenu>
                                         <ContextMenu>
                                             <MenuItem
-                                                Command="{Binding $parent[ItemsControl].((vm:FriendListViewModel)DataContext).SendMessageCommand}"
-                                                CommandParameter="{Binding}"
-                                                Header="发送消息" />
-                                            <MenuItem
-                                                Command="{Binding $parent[ItemsControl].((vm:FriendListViewModel)DataContext).ViewProfileCommand}"
-                                                CommandParameter="{Binding}"
-                                                Header="查看资料" />
-                                            <Separator />
-                                            <MenuItem
                                                 Command="{Binding $parent[ItemsControl].((vm:FriendListViewModel)DataContext).RemoveFriendCommand}"
                                                 CommandParameter="{Binding}"
                                                 Header="删除好友" />
@@ -147,7 +140,6 @@
                                     </Border.ContextMenu>
 
                                     <Grid ColumnDefinitions="Auto,*,Auto">
-
                                         <!--  头像和状态  -->
                                         <Grid
                                             Grid.Column="0"
@@ -165,7 +157,7 @@
                                                     FontSize="16"
                                                     FontWeight="Bold"
                                                     Foreground="White"
-                                                    Text="{Binding Nickname, Converter={StaticResource FirstCharConverter}}" />
+                                                    Text="{Binding FriendUser.UserName, Converter={StaticResource FirstCharConverter}}" />
                                             </Border>
 
                                             <!--  在线状态指示器  -->
@@ -175,43 +167,11 @@
                                                 Margin="0,0,-2,-2"
                                                 HorizontalAlignment="Right"
                                                 VerticalAlignment="Bottom"
-                                                Background="{Binding Status, Converter={StaticResource StatusColorConverter}}"
+                                                Background="{Binding FriendUser.Status, Converter={StaticResource StatusColorConverter}}"
                                                 BorderBrush="White"
                                                 BorderThickness="2"
                                                 CornerRadius="6" />
                                         </Grid>
-
-                                        <!--  好友信息  -->
-                                        <StackPanel
-                                            Grid.Column="1"
-                                            Margin="12,0,8,0"
-                                            VerticalAlignment="Center"
-                                            Spacing="2">
-                                            <!--  昵称/备注名  -->
-                                            <TextBlock
-                                                FontSize="14"
-                                                FontWeight="SemiBold"
-                                                Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
-                                                Text="{Binding Remark, Converter={StaticResource DisplayNameConverter}, ConverterParameter={Binding Nickname}}" />
-
-                                            <!--  个性签名或状态  -->
-                                            <TextBlock
-                                                FontSize="12"
-                                                Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                                                MaxLines="1"
-                                                Text="{Binding Signature, Converter={StaticResource SignatureOrStatusConverter}, ConverterParameter={Binding Status}}"
-                                                TextTrimming="CharacterEllipsis" />
-                                        </StackPanel>
-
-                                        <!--  时间信息  -->
-                                        <TextBlock
-                                            Grid.Column="2"
-                                            VerticalAlignment="Top"
-                                            FontSize="10"
-                                            Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                                            IsVisible="{Binding Status, Converter={StaticResource OfflineVisibilityConverter}}"
-                                            Text="{Binding LastOnlineTime, Converter={StaticResource RelativeTimeConverter}}" />
-
                                     </Grid>
                                 </Border>
                             </DataTemplate>
@@ -225,12 +185,8 @@
                     VerticalAlignment="Center"
                     IsVisible="{Binding FilteredFriends.Count, Converter={StaticResource ZeroToVisibilityConverter}}"
                     Spacing="16">
-                    <Path
-                        Width="48"
-                        Height="48"
-                        Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-                        Fill="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
                     <TextBlock
+                        HorizontalAlignment="Center"
                         FontSize="14"
                         Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
                         Text="暂无好友" />
@@ -266,7 +222,5 @@
                     FontSize="12" />
             </Grid>
         </Border>
-
     </Grid>
-
 </UserControl>

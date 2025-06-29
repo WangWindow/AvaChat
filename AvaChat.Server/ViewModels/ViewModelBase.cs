@@ -1,7 +1,3 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿namespace AvaChat.Server.ViewModels;
 
-namespace AvaChat.Server.ViewModels;
-
-public class ViewModelBase : ObservableObject
-{
-}
+public class ViewModelBase : ObservableObject { }

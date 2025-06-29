@@ -6,9 +6,9 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="using:AvaChat.Client.Views"
     xmlns:vm="using:AvaChat.Client.ViewModels"
-    Title="AvaChat - 实时聊天系统"
-    Width="1200"
-    Height="800"
+    Title="AvaChat"
+    Width="840"
+    Height="560"
     MinWidth="800"
     MinHeight="600"
     d:DesignHeight="800"
@@ -22,32 +22,21 @@
         <vm:MainWindowViewModel />
     </Design.DataContext>
 
-    <!--  三栏布局：导航栏 + 好友列表 + 聊天窗口  -->
-    <Grid ColumnDefinitions="60,300,*">
+    <!--  双栏布局：好友列表 + 聊天窗口  -->
+    <Grid ColumnDefinitions="200,*">
 
-        <!--  左侧导航栏  -->
+        <!--  好友列表  -->
         <Border
             Grid.Column="0"
-            Background="{DynamicResource SystemControlBackgroundAltMediumBrush}"
-            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-            BorderThickness="0,0,1,0">
-            <views:NavigationView DataContext="{Binding NavigationViewModel}" />
-        </Border>
-
-        <!--  中间好友列表  -->
-        <Border
-            Grid.Column="1"
             Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
             BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
             BorderThickness="0,0,1,0">
             <views:FriendListView DataContext="{Binding FriendListViewModel}" />
         </Border>
 
-        <!--  右侧聊天窗口  -->
-        <Border Grid.Column="2" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+        <!--  聊天窗口  -->
+        <Border Grid.Column="1" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
             <views:ChatView DataContext="{Binding ChatViewModel}" />
         </Border>
-
     </Grid>
-
 </Window>
