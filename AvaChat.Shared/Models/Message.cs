@@ -8,20 +8,16 @@ public class Message
     [Required, StringLength(8)]
     public string SenderId { get; set; } = string.Empty;
 
-    [ForeignKey(nameof(SenderId))]
-    public User Sender { get; set; } = null!;
-
     [Required, StringLength(8)]
     public string ReceiverId { get; set; } = string.Empty;
-
-    [ForeignKey(nameof(ReceiverId))]
-    public User Receiver { get; set; } = null!;
 
     [Required]
     public string Content { get; set; } = string.Empty;
 
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+
     public MessageStatus Status { get; set; } = MessageStatus.Sending;
+
     public MessageType MessageType { get; set; } = MessageType.Text;
 }
 

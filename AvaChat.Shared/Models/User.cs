@@ -22,3 +22,19 @@ public enum UserStatus
     Offline = 0, // 离线
     Online = 1,  // 在线
 }
+
+public class UserInfo
+{
+    [Key]
+    [JsonPropertyName("userId")]
+    public string UserId { get; set; } = string.Empty;
+
+    [JsonPropertyName("userName")]
+    public string UserName { get; set; } = string.Empty;
+
+    [JsonPropertyName("status")]
+    public UserStatus Status { get; set; } = UserStatus.Offline;
+
+    [JsonPropertyName("lastLoginTime")]
+    public DateTime? LastLoginTime { get; set; }
+}

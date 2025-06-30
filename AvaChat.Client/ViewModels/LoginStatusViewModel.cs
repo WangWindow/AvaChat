@@ -178,7 +178,7 @@ public partial class LoginStatusViewModel : ObservableObject
             HasErrorDetail = false;
 
             // 调用API
-            var api = new AuthApiService(ServerAddress);
+            var api = new ApiService(ServerAddress);
             var resp = await api.RegisterAsync(RegisterUserName, RegisterPassword);
             if (resp == null)
             {

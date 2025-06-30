@@ -186,7 +186,7 @@ public partial class App : Application
         {
             try
             {
-                var api = new AuthApiService(CurrentServerAddress);
+                var api = new ApiService(CurrentServerAddress);
                 await api.LogoutAsync(CurrentUserId);
             }
             catch { /* 忽略异常 */ }

@@ -65,12 +65,55 @@ public partial class FriendListViewModel : ViewModelBase
 
     private async Task LoadFriendsAsync()
     {
-        // TODO
+        try
+        {
+            IsLoading = true;
+            var factory = new ClientDbContextFactory();
+            using var db = factory.CreateDbContext([]);
+            // 获取当前用户Id
+            var userId = App.CurrentUserId;
+            if (string.IsNullOrEmpty(userId))
+            {
+                Friends = [];
+                FilteredFriends = [];
+                return;
+            }
+            // 加载所有好友关系（含System）
+            var friends = db.Friendships
+                .Where(f => f.UserId == userId)
+                .OrderBy(f => f.FriendUserId)
+                .ToList();
+            Friends = new ObservableCollection<Friendship>(friends);
+            FilterFriends();
+        }
+        catch (Exception)
+        {
+            // 可根据需要弹窗或日志
+            Friends = [];
+            FilteredFriends = [];
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private void FilterFriends()
     {
-        // TODO
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            FilteredFriends = new ObservableCollection<Friendship>(Friends);
+        }
+        else
+        {
+            var lower = SearchText.ToLowerInvariant();
+            var filtered = Friends.Where(f =>
+                (f.FriendUser.UserName?.ToLowerInvariant().Contains(lower, StringComparison.InvariantCultureIgnoreCase) ?? false)
+                || (f.FriendUserId?.Contains(lower) ?? false)
+                || (f.AlterName?.ToLowerInvariant().Contains(lower, StringComparison.InvariantCultureIgnoreCase) ?? false)
+            ).ToList();
+            FilteredFriends = new ObservableCollection<Friendship>(filtered);
+        }
     }
 
     /// <summary>

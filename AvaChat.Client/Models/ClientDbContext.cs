@@ -2,7 +2,7 @@ namespace AvaChat.Client.Models;
 
 public class ClientDbContext(DbContextOptions<ClientDbContext> options) : DbContext(options)
 {
-    public DbSet<User> Users { get; set; } = null!;
+    public DbSet<UserInfo> Users { get; set; } = null!;
     public DbSet<Friendship> Friendships { get; set; } = null!;
     public DbSet<Message> Messages { get; set; } = null!;
     public DbSet<ClientSetting> ClientSettings { get; set; } = null!;
@@ -25,7 +25,7 @@ public class ClientDbContext(DbContextOptions<ClientDbContext> options) : DbCont
         base.OnModelCreating(modelBuilder);
 
         modelBuilder
-            .Entity<User>()
+            .Entity<UserInfo>()
             .HasIndex(u => u.UserId)
             .IsUnique();
 

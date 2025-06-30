@@ -30,7 +30,7 @@ public partial class ChatViewModel : ViewModelBase
     {
         if (value != null)
         {
-            _ = LoadChatHistory(); // Fire and forget
+            _ = LoadChatHistory();
             UpdateStatusText();
         }
     }

@@ -1,3 +1,5 @@
+
+using AvaChat.Client.Models;
 namespace AvaChat.Client.ViewModels;
 
 
@@ -89,7 +91,7 @@ public partial class LoginViewModel : ViewModelBase
             statusViewModel.ShowConnecting();
 
             // 调用API
-            var api = new AuthApiService(ServerAddress);
+            var api = new ApiService(ServerAddress);
             var resp = await api.LoginAsync(UserId, Password) ?? throw new Exception("无法连接服务器");
             if (resp.Success)
             {
@@ -97,6 +99,21 @@ public partial class LoginViewModel : ViewModelBase
 
                 // 保存登录信息
                 SaveCredentials(RememberCredentials);
+
+                // 登录成功后进行数据同步
+                bool syncSuccess = true;
+                try
+                {
+                    // 用户信息同步
+                    var userData = await api.GetUserDataAsync(UserId);
+                    // 好友关系同步
+                    var friends = await api.GetFriendshipsAsync(UserId);
+                }
+                catch
+                {
+                    // 同步失败，记录但不阻断登录
+                    syncSuccess = false;
+                }
 
                 // 设置全局登录状态，刷新托盘菜单
                 App.OnUserLogin(UserId, ServerAddress);
@@ -107,6 +124,12 @@ public partial class LoginViewModel : ViewModelBase
 
                 // 关闭登录窗口
                 CloseCurrentLoginWindow();
+
+                // 如同步失败可弹窗提示（可选）
+                if (!syncSuccess)
+                {
+                    statusViewModel.ShowError("同步失败", "部分数据未能从云端同步，已使用本地缓存。");
+                }
             }
             else
             {

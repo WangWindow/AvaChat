@@ -6,8 +6,9 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:AvaChat.Server.ViewModels"
     Title="AvaChat.Server"
+    MinWidth="460"
     d:DesignHeight="600"
-    d:DesignWidth="900"
+    d:DesignWidth="800"
     x:DataType="vm:MainWindowViewModel"
     Icon="/Assets/avalonia-logo.ico"
     TransparencyLevelHint="AcrylicBlur"
@@ -18,7 +19,7 @@
         <vm:MainWindowViewModel />
     </Design.DataContext>
 
-    <Grid ColumnDefinitions="220,10,*" RowDefinitions="*">
+    <Grid ColumnDefinitions="200,10,*" RowDefinitions="*">
         <ExperimentalAcrylicBorder IsHitTestVisible="False">
             <ExperimentalAcrylicBorder.Material>
                 <ExperimentalAcrylicMaterial
@@ -55,6 +56,7 @@
         <!--  右侧主区  -->
         <Grid
             Grid.Column="2"
+            MinWidth="200"
             Margin="10,10,10,10"
             RowDefinitions="*,Auto">
             <!--  系统消息显示区  -->
@@ -66,23 +68,28 @@
                 <ScrollViewer>
                     <TextBlock
                         FontSize="15"
-                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                        Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
                         Text="{Binding SystemMessages}"
                         TextWrapping="Wrap" />
                 </ScrollViewer>
             </Border>
             <!--  消息输入区  -->
-            <StackPanel
-                Grid.Row="1"
-                Orientation="Horizontal"
-                Spacing="8">
+            <DockPanel Grid.Row="1">
+                <Button
+                    Width="80"
+                    Margin="8,0,0,0"
+                    Command="{Binding SendSystemMessageCommand}"
+                    DockPanel.Dock="Right">
+                    <TextBlock HorizontalAlignment="Center" Text="发送" />
+                </Button>
                 <TextBox
-                    Width="500"
-                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                    Margin="0"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
                     Text="{Binding MessageToSend, Mode=TwoWay}"
                     Watermark="输入系统消息..." />
-                <Button Command="{Binding SendSystemMessageCommand}" Content="发送" />
-            </StackPanel>
+            </DockPanel>
         </Grid>
     </Grid>
 </Window>
