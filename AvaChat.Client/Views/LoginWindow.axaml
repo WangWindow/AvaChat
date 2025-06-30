@@ -53,53 +53,112 @@
         <!--  中间登录表单区域  -->
         <StackPanel Grid.Row="1" Spacing="16">
 
-            <!--  用户号码输入  -->
-            <TextBox
-                Margin="0,4,0,0"
-                Padding="12,8"
-                HorizontalContentAlignment="Center"
-                VerticalContentAlignment="Center"
-                Background="Transparent"
-                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
-                FontSize="14"
-                Text="{Binding UserId}"
-                Watermark="请输入8位用户号码" />
-
-            <!--  密码输入  -->
-            <TextBox
-                Margin="0,4,0,0"
-                Padding="12,8"
-                HorizontalContentAlignment="Center"
-                VerticalContentAlignment="Center"
-                Background="Transparent"
-                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
-                FontSize="14"
-                PasswordChar="{Binding PasswordChar}"
-                Text="{Binding Password}"
-                Watermark="请输入密码" />
-
-            <!--  密码可见性切换按钮  -->
-            <Button
-                Width="32"
-                Height="32"
-                Margin="0,-48,8,0"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                Background="Transparent"
-                BorderThickness="0"
-                Command="{Binding TogglePasswordVisibilityCommand}"
-                CornerRadius="16"
-                ToolTip.Tip="{Binding PasswordVisibilityTooltip}">
-                <TextBlock
-                    FontFamily="Segoe MDL2 Assets"
+            <!--  用户号码输入（TextBox+下拉按钮+水印+下拉选择）  -->
+            <Grid>
+                <TextBox
+                    Name="UserIdTextBox"
+                    MinWidth="180"
+                    MaxHeight="180"
+                    Padding="12,8"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
                     FontSize="14"
-                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                    Text="{Binding PasswordVisibilityIcon}" />
-            </Button>
+                    LostFocus="UserIdTextBox_LostFocus"
+                    Text="{Binding UserId, Mode=TwoWay}"
+                    Watermark="请输入8位用户Id或选择历史账号" />
+                <Button
+                    Name="UserIdDropButton"
+                    Width="32"
+                    Height="32"
+                    Margin="0,4,8,0"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Click="UserIdDropButton_Click"
+                    ZIndex="1">
+                    <Path
+                        Width="16"
+                        Height="16"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Data="M 0 0 L 8 0 L 4 5 Z"
+                        Fill="Gray"
+                        Stretch="Uniform" />
+                </Button>
+                <Popup
+                    Name="UserIdPopup"
+                    IsOpen="{Binding IsUserIdListOpen, Mode=TwoWay}"
+                    Placement="Bottom"
+                    PlacementTarget="UserIdTextBox">
+                    <Border
+                        MinWidth="180"
+                        MaxHeight="180"
+                        Background="transparent"
+                        BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6">
+                        <ListBox
+                            Name="UserIdListBox"
+                            Background="transparent"
+                            CornerRadius="6"
+                            ItemsSource="{Binding UserIdList}"
+                            LostFocus="UserIdListBox_LostFocus"
+                            SelectedItem="{Binding UserId, Mode=TwoWay}"
+                            SelectionChanged="UserIdListBox_SelectionChanged">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Background="transparent"
+                                        Text="{Binding}" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Border>
+                </Popup>
+            </Grid>
+
+            <Grid>
+                <!--  密码输入  -->
+                <TextBox
+                    Margin="0,4,0,0"
+                    Padding="12,8"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    FontSize="14"
+                    PasswordChar="{Binding PasswordChar}"
+                    Text="{Binding Password}"
+                    Watermark="请输入密码" />
+
+                <!--  密码可见性切换按钮  -->
+                <Button
+                    Width="32"
+                    Height="32"
+                    Margin="0,4,8,0"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Command="{Binding TogglePasswordVisibilityCommand}"
+                    CornerRadius="16"
+                    ToolTip.Tip="{Binding PasswordVisibilityTooltip}">
+                    <TextBlock
+                        FontFamily="Segoe MDL2 Assets"
+                        FontSize="14"
+                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                        Text="{Binding PasswordVisibilityIcon}" />
+                </Button>
+            </Grid>
 
             <!--  记住登录信息  -->
             <CheckBox

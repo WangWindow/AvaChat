@@ -6,6 +6,7 @@ public class ClientDbContext(DbContextOptions<ClientDbContext> options) : DbCont
     public DbSet<Friendship> Friendships { get; set; } = null!;
     public DbSet<Message> Messages { get; set; } = null!;
     public DbSet<ClientSetting> ClientSettings { get; set; } = null!;
+    public DbSet<LoginInfo> LoginInfos { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -43,5 +44,6 @@ public class ClientDbContext(DbContextOptions<ClientDbContext> options) : DbCont
             });
 
         modelBuilder.Entity<ClientSetting>();
+        modelBuilder.Entity<LoginInfo>();
     }
 }

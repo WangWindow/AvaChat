@@ -1,5 +1,6 @@
 namespace AvaChat.Client.ViewModels;
 
+
 public partial class LoginViewModel : ViewModelBase
 {
     [ObservableProperty]
@@ -25,6 +26,18 @@ public partial class LoginViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _passwordVisibilityTooltip = "显示密码";
+
+    /// <summary>
+    /// 所有已保存账号Id列表（用于下拉选择）
+    /// </summary>
+    [ObservableProperty]
+    private List<string> _userIdList = new();
+
+    /// <summary>
+    /// 控制账号下拉列表显示
+    /// </summary>
+    [ObservableProperty]
+    private bool _isUserIdListOpen = false;
 
     public LoginViewModel()
     {
@@ -87,10 +100,7 @@ public partial class LoginViewModel : ViewModelBase
                 await statusViewModel.ShowSuccessAsync();
 
                 // 保存登录信息
-                if (RememberCredentials)
-                {
-                    SaveCredentials();
-                }
+                SaveCredentials(RememberCredentials);
 
                 // 打开主窗口
                 var mainWindow = new MainWindow();
@@ -185,13 +195,52 @@ public partial class LoginViewModel : ViewModelBase
         loginWindow?.Close();
     }
 
+
     private void LoadSavedCredentials()
     {
-        // TODO: 将从本地数据库加载保存的用户Id和密码
+        try
+        {
+            var factory = new ClientDbContextFactory();
+            using var db = factory.CreateDbContext([]);
+            // 获取所有已保存账号Id，按Id升序
+            UserIdList = db.LoginInfos
+                .Select(x => x.UserId)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToList();
+
+            // 获取最近一次登录的账号
+            var info = db.LoginInfos.OrderByDescending(x => x.LoginTime).FirstOrDefault();
+            if (info != null)
+            {
+                UserId = info.UserId;
+                Password = info.Password ?? string.Empty;
+            }
+        }
+        catch { /* 忽略异常 */ }
     }
 
-    private void SaveCredentials()
+    private void SaveCredentials(bool isSavePassword)
     {
-        // TODO: 将用户Id和密码保存到本地数据库
+        try
+        {
+            var factory = new ClientDbContextFactory();
+            using var db = factory.CreateDbContext([]);
+            // 先删除已有相同UserId的记录
+            var old = db.LoginInfos.Where(x => x.UserId == UserId).ToList();
+            if (old.Count > 0)
+            {
+                db.LoginInfos.RemoveRange(old);
+            }
+            var info = new LoginInfo
+            {
+                UserId = UserId,
+                Password = isSavePassword ? Password : null,
+                LoginTime = DateTime.Now
+            };
+            db.LoginInfos.Add(info);
+            db.SaveChanges();
+        }
+        catch { /* 忽略异常 */ }
     }
 }

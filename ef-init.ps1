@@ -1,2 +1,2 @@
-dotnet ef migrations add Init --project ./AvaChat.Server/AvaChat.Server.csproj --startup-project ./AvaChat.Server/AvaChat.Server.csproj
-dotnet ef migrations add Init --project ./AvaChat.Client/AvaChat.Client.csproj --startup-project ./AvaChat.Client/AvaChat.Client.csproj
+dotnet ef migrations add Init --project ./AvaChat.Server/AvaChat.Server.csproj --context ServerDbContext
+dotnet ef migrations add Init --project ./AvaChat.Client/AvaChat.Client.csproj --context ClientDbContext

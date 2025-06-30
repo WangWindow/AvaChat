@@ -1,2 +1,2 @@
-dotnet ef database update --project ./AvaChat.Server/AvaChat.Server.csproj --startup-project ./AvaChat.Server/AvaChat.Server.csproj
-dotnet ef database update --project ./AvaChat.Client/AvaChat.Client.csproj --startup-project ./AvaChat.Client/AvaChat.Client.csproj
+dotnet ef database update --project ./AvaChat.Server/AvaChat.Server.csproj --context ServerDbContext
+dotnet ef database update --project ./AvaChat.Client/AvaChat.Client.csproj --context ClientDbContext
