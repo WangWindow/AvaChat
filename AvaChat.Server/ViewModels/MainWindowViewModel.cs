@@ -31,12 +31,21 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
-    // 示例：初始化一些在线用户
     public MainWindowViewModel()
     {
-        // TODO: 实际应从服务器获取在线用户
-        OnlineUsers.Add("10000001");
-        OnlineUsers.Add("10000002");
-        OnlineUsers.Add("System");
+        try
+        {
+            using var db = new Models.ServerDbContext(new DbContextOptions<Models.ServerDbContext>());
+            // User.Status == UserStatus.Online
+            var online = db.Users
+                .Where(u => u.Status == UserStatus.Online)
+                .Select(u => u.UserId)
+                .ToList();
+            OnlineUsers = new ObservableCollection<string>(online);
+        }
+        catch (Exception ex)
+        {
+            SystemMessages += $"[错误] 加载在线用户失败: {ex.Message}\n";
+        }
     }
 }

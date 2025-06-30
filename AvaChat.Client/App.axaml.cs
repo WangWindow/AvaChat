@@ -1,7 +1,67 @@
+using Avalonia.LogicalTree;
 namespace AvaChat.Client;
 
 public partial class App : Application
 {
+    public static TrayIcon? MainTrayIcon;
+    public static string? CurrentUserId { get; set; }
+    public static string? CurrentServerAddress { get; set; }
+
+    public static void OnUserLogin(string userId, string serverAddress)
+    {
+        CurrentUserId = userId;
+        CurrentServerAddress = serverAddress;
+        UpdateTrayMenu();
+    }
+
+    public static void OnUserLogout()
+    {
+        CurrentUserId = null;
+        UpdateTrayMenu();
+    }
+
+    public static void UpdateTrayMenu()
+    {
+        if (Current is App app)
+        {
+            var menu = new NativeMenu();
+
+            var showItem = new NativeMenuItem("显示主窗口");
+            showItem.Click += app.ShowWindow_Click;
+            menu.Add(showItem);
+
+            if (!string.IsNullOrEmpty(CurrentUserId))
+            {
+                var setMenu = new NativeMenuItem("设置");
+                var sub = new NativeMenu();
+
+                var profileItem = new NativeMenuItem("个人资料");
+                profileItem.Click += app.Profile_Click;
+                sub.Add(profileItem);
+
+                var msgItem = new NativeMenuItem("消息设置");
+                msgItem.Click += app.MessageSettings_Click;
+                sub.Add(msgItem);
+
+                sub.Add(new NativeMenuItemSeparator());
+
+                var themeItem = new NativeMenuItem("主题切换");
+                themeItem.Click += app.ThemeSwitch_Click;
+                sub.Add(themeItem);
+
+                setMenu.Menu = sub;
+                menu.Add(setMenu);
+            }
+            menu.Add(new NativeMenuItemSeparator());
+
+            var exitItem = new NativeMenuItem("退出");
+            exitItem.Click += app.Exit_Click;
+            menu.Add(exitItem);
+
+            MainTrayIcon.Menu = menu;
+        }
+    }
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -10,6 +70,7 @@ public partial class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         Task.Run(Start);
+
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -23,6 +84,13 @@ public partial class App : Application
             // {
             //     DataContext = new MainWindowViewModel()
             // };
+
+            // 优先通过XAML注册的WindowIcon资源获取托盘图标
+            MainTrayIcon = new TrayIcon
+            {
+                Icon = Current!.Resources["AppTrayIcon"] as WindowIcon ?? throw new NullReferenceException("AppTrayIcon 资源未找到或类型错误"),
+                ToolTipText = "AvaChat",
+            };
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -44,7 +112,6 @@ public partial class App : Application
 
     private static void Start()
     {
-        // TODO
         var options = new DbContextOptionsBuilder<ClientDbContext>()
             .UseSqlite("Data Source=AvaChat.Client.db")
             .Options;
@@ -113,8 +180,18 @@ public partial class App : Application
     /// <summary>
     /// 退出应用程序
     /// </summary>
-    private void Exit_Click(object? sender, EventArgs e)
+    private async void Exit_Click(object? sender, EventArgs e)
     {
+        if (!string.IsNullOrEmpty(CurrentUserId) && !string.IsNullOrEmpty(CurrentServerAddress))
+        {
+            try
+            {
+                var api = new AuthApiService(CurrentServerAddress);
+                await api.LogoutAsync(CurrentUserId);
+            }
+            catch { /* 忽略异常 */ }
+        }
+        OnUserLogout();
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.Shutdown();

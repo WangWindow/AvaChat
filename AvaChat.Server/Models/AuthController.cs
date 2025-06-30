@@ -64,4 +64,25 @@ public class AuthController(ServerDbContext db) : ControllerBase
             UserName = user.UserName
         });
     }
+
+    [HttpPost("logout")]
+    public async Task<ActionResult<LogoutResponse>> Logout([FromBody] LogoutRequest req)
+    {
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.UserId == req.UserId);
+        if (user == null)
+        {
+            return Ok(new LogoutResponse
+            {
+                Success = false,
+                Error = "用户不存在"
+            });
+        }
+        user.Status = UserStatus.Offline;
+        await _db.SaveChangesAsync();
+        return Ok(new LogoutResponse
+        {
+            Success = true,
+            UserName = user.UserName
+        });
+    }
 }

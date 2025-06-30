@@ -1,3 +1,4 @@
+
 namespace AvaChat.Client.Models;
 
 public class AuthApiService
@@ -59,6 +60,28 @@ public class AuthApiService
         try
         {
             return System.Text.Json.JsonSerializer.Deserialize<LoginResponse>(content);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"反序列化失败: {ex.Message}, 原始内容: {content}");
+        }
+    }
+
+    public async Task<LogoutResponse?> LogoutAsync(string userId)
+    {
+        var req = new LogoutRequest
+        {
+            UserId = userId
+        };
+        var url = _baseUrl + "/api/auth/logout";
+        var resp = await _httpClient.PostAsJsonAsync(url, req);
+        var content = await resp.Content.ReadAsStringAsync();
+        Console.WriteLine($"[LogoutAsync] url={url}, status={resp.StatusCode}, content={content}");
+        if (!resp.IsSuccessStatusCode)
+            throw new Exception($"API错误: {resp.StatusCode}, 内容: {content}");
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<LogoutResponse>(content);
         }
         catch (Exception ex)
         {

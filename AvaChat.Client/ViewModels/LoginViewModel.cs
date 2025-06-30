@@ -90,17 +90,16 @@ public partial class LoginViewModel : ViewModelBase
 
             // 调用API
             var api = new AuthApiService(ServerAddress);
-            var resp = await api.LoginAsync(UserId, Password);
-            if (resp == null)
-            {
-                throw new Exception("无法连接服务器");
-            }
+            var resp = await api.LoginAsync(UserId, Password) ?? throw new Exception("无法连接服务器");
             if (resp.Success)
             {
                 await statusViewModel.ShowSuccessAsync();
 
                 // 保存登录信息
                 SaveCredentials(RememberCredentials);
+
+                // 设置全局登录状态，刷新托盘菜单
+                App.OnUserLogin(UserId, ServerAddress);
 
                 // 打开主窗口
                 var mainWindow = new MainWindow();

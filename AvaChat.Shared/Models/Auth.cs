@@ -1,5 +1,5 @@
-using System.Text.Json.Serialization;
 namespace AvaChat.Shared.Models;
+
 
 public class RegisterRequest
 {
@@ -30,6 +30,23 @@ public class LoginRequest
 }
 
 public class LoginResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+    [JsonPropertyName("error")]
+    public string? Error { get; set; }
+    [JsonPropertyName("userName")]
+    public string? UserName { get; set; }
+}
+
+
+public class LogoutRequest
+{
+    [Required]
+    public string UserId { get; set; } = string.Empty;
+}
+
+public class LogoutResponse
 {
     [JsonPropertyName("success")]
     public bool Success { get; set; }
