@@ -6,6 +6,9 @@ namespace AvaChat.Server.Models;
 [Route("api/[controller]")]
 public class AuthController(ServerDbContext db) : ControllerBase
 {
+    // 在线用户变更信号
+    public static event Action? OnlineUsersChanged;
+
     private readonly ServerDbContext _db = db;
 
     [HttpPost("register")]
@@ -58,6 +61,9 @@ public class AuthController(ServerDbContext db) : ControllerBase
         user.LastLoginTime = DateTime.Now;
         await _db.SaveChangesAsync();
 
+        // 触发在线用户变更信号
+        OnlineUsersChanged?.Invoke();
+
         return Ok(new LoginResponse
         {
             Success = true,
@@ -79,6 +85,10 @@ public class AuthController(ServerDbContext db) : ControllerBase
         }
         user.Status = UserStatus.Offline;
         await _db.SaveChangesAsync();
+
+        // 触发在线用户变更信号
+        OnlineUsersChanged?.Invoke();
+
         return Ok(new LogoutResponse
         {
             Success = true,

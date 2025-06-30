@@ -33,10 +33,18 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel()
     {
+        // 订阅在线用户变更事件
+        AuthController.OnlineUsersChanged += ReloadOnlineUsers;
+
+        // 初始化在线用户列表
+        ReloadOnlineUsers();
+    }
+
+    public void ReloadOnlineUsers()
+    {
         try
         {
-            using var db = new Models.ServerDbContext(new DbContextOptions<Models.ServerDbContext>());
-            // User.Status == UserStatus.Online
+            using var db = new ServerDbContext(new DbContextOptions<ServerDbContext>());
             var online = db.Users
                 .Where(u => u.Status == UserStatus.Online)
                 .Select(u => u.UserId)
