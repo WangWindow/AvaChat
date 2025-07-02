@@ -1,0 +1,169 @@
+<Window
+    x:Class="AvaChat.Client.Views.AddFriendDialog"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:AvaChat.Client.ViewModels"
+    Title="添加好友"
+    Width="450"
+    Height="600"
+    x:DataType="vm:AddFriendDialogViewModel"
+    CanResize="False"
+    ShowInTaskbar="False"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+
+    <Design.DataContext>
+        <vm:AddFriendDialogViewModel />
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!--  搜索框  -->
+        <Border
+            Grid.Row="0"
+            Padding="20"
+            Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <StackPanel Spacing="12">
+                <TextBlock
+                    FontSize="16"
+                    FontWeight="SemiBold"
+                    Text="搜索用户" />
+                <TextBox
+                    Padding="12,8"
+                    Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                    BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Text="{Binding SearchText}"
+                    Watermark="输入用户名或用户ID...">
+                    <TextBox.InnerRightContent>
+                        <Button
+                            Margin="4"
+                            Padding="8,4"
+                            Background="{DynamicResource SystemControlHighlightAccentBrush}"
+                            BorderThickness="0"
+                            Command="{Binding SearchCommand}"
+                            Content="搜索"
+                            CornerRadius="4"
+                            Foreground="White" />
+                    </TextBox.InnerRightContent>
+                </TextBox>
+            </StackPanel>
+        </Border>
+
+        <!--  搜索结果  -->
+        <Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+            <ScrollViewer Padding="20">
+                <StackPanel Spacing="8">
+                    <!--  搜索状态  -->
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        FontSize="14"
+                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                        IsVisible="{Binding IsSearching}"
+                        Text="正在搜索..." />
+
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        FontSize="14"
+                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                        IsVisible="{Binding !IsSearching}"
+                        Text="请输入关键词搜索用户">
+                        <TextBlock.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="!IsSearching" />
+                                <Binding Converter="{StaticResource ZeroToBoolConverter}" Path="SearchResults.Count" />
+                            </MultiBinding>
+                        </TextBlock.IsVisible>
+                    </TextBlock>
+
+                    <!--  搜索结果列表  -->
+                    <ItemsControl ItemsSource="{Binding SearchResults}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border
+                                    Margin="0,4"
+                                    Padding="16,12"
+                                    Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                                    CornerRadius="8">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <!--  头像  -->
+                                        <Border
+                                            Grid.Column="0"
+                                            Width="48"
+                                            Height="48"
+                                            Background="{DynamicResource SystemControlHighlightAccentBrush}"
+                                            CornerRadius="24">
+                                            <TextBlock
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                FontSize="18"
+                                                FontWeight="Bold"
+                                                Foreground="White"
+                                                Text="{Binding UserName, Converter={StaticResource FirstCharConverter}}" />
+                                        </Border>
+
+                                        <!--  用户信息  -->
+                                        <StackPanel
+                                            Grid.Column="1"
+                                            Margin="16,0"
+                                            VerticalAlignment="Center"
+                                            Spacing="4">
+                                            <TextBlock
+                                                FontSize="16"
+                                                FontWeight="SemiBold"
+                                                Text="{Binding UserName}" />
+                                            <TextBlock
+                                                FontSize="12"
+                                                Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                Text="{Binding UserId, StringFormat='用户ID: {0}'}" />
+                                            <TextBlock
+                                                FontSize="12"
+                                                Foreground="{Binding Status, Converter={StaticResource StatusColorConverter}}"
+                                                Text="{Binding Status, Converter={StaticResource StatusTextConverter}}" />
+                                        </StackPanel>
+
+                                        <!--  添加按钮  -->
+                                        <Button
+                                            Grid.Column="2"
+                                            Padding="12,6"
+                                            Background="{DynamicResource SystemControlHighlightAccentBrush}"
+                                            BorderThickness="0"
+                                            Command="{Binding $parent[ItemsControl].((vm:AddFriendDialogViewModel)DataContext).AddFriendCommand}"
+                                            CommandParameter="{Binding}"
+                                            Content="添加"
+                                            CornerRadius="4"
+                                            Foreground="White" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!--  底部操作栏  -->
+        <Border
+            Grid.Row="2"
+            Padding="20,16"
+            Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+            BorderThickness="0,1,0,0">
+            <StackPanel
+                HorizontalAlignment="Right"
+                Orientation="Horizontal"
+                Spacing="12">
+                <Button
+                    Padding="16,8"
+                    Background="Transparent"
+                    BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                    BorderThickness="1"
+                    Command="{Binding CancelCommand}"
+                    Content="取消"
+                    CornerRadius="4" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

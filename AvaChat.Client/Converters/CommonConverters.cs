@@ -207,3 +207,90 @@ public class DisplayNameConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+/// <summary>
+/// 日期时间转换器
+/// </summary>
+public class DateTimeConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is DateTime dateTime)
+        {
+            var now = DateTime.Now;
+            var diff = now - dateTime;
+
+            if (diff.TotalMinutes < 1)
+                return "刚刚";
+            if (diff.TotalMinutes < 60)
+                return $"{(int)diff.TotalMinutes}分钟前";
+            if (diff.TotalHours < 24)
+                return $"{(int)diff.TotalHours}小时前";
+            if (diff.TotalDays < 7)
+                return $"{(int)diff.TotalDays}天前";
+
+            return dateTime.ToString("MM/dd");
+        }
+        return "";
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// 用户头像颜色转换器
+/// </summary>
+public class AvatarColorConverter : IValueConverter
+{
+    private readonly List<(string Start, string End)> _colorPairs = new()
+    {
+        ("#FF4A90E2", "#FF7B68EE"),
+        ("#FF42A5F5", "#FF26C6DA"),
+        ("#FF66BB6A", "#FF26A69A"),
+        ("#FFFF7043", "#FFFF5722"),
+        ("#FFAB47BC", "#FF8E24AA"),
+        ("#FF29B6F6", "#FF039BE5"),
+        ("#FF26C6DA", "#FF00ACC1"),
+        ("#FF66BB6A", "#FF43A047")
+    };
+
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is string userName && !string.IsNullOrEmpty(userName))
+        {
+            var hash = userName.GetHashCode();
+            var index = Math.Abs(hash) % _colorPairs.Count;
+            var colorPair = _colorPairs[index];
+
+            var brush = new LinearGradientBrush
+            {
+                StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+                EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative)
+            };
+
+            brush.GradientStops.Add(new GradientStop(Color.Parse(colorPair.Start), 0));
+            brush.GradientStops.Add(new GradientStop(Color.Parse(colorPair.End), 1));
+
+            return brush;
+        }
+
+        // 默认渐变色
+        var defaultBrush = new LinearGradientBrush
+        {
+            StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+            EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative)
+        };
+        defaultBrush.GradientStops.Add(new GradientStop(Color.Parse("#FF4A90E2"), 0));
+        defaultBrush.GradientStops.Add(new GradientStop(Color.Parse("#FF7B68EE"), 1));
+
+        return defaultBrush;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}

@@ -6,53 +6,6 @@ namespace AvaChat.Server.Models;
 [Route("api/[controller]")]
 public class AuthController(ServerDbContext db) : ControllerBase
 {
-    // 服务端初始化时自动创建System用户
-    static AuthController()
-    {
-        using var db = new ServerDbContext(new DbContextOptions<ServerDbContext>());
-        // 检查System用户是否存在
-        var sys = db.Users.FirstOrDefault(u => u.UserId == "00000000");
-        if (sys == null)
-        {
-            db.Users.Add(new User
-            {
-                UserId = "00000000",
-                UserName = "System",
-                Password = "",
-                Status = UserStatus.Online,
-                LastLoginTime = DateTime.UtcNow
-            });
-            db.SaveChanges();
-        }
-        // 为所有用户与System建立好友关系
-        var allUserIds = db.Users.Select(u => u.UserId).ToList();
-        foreach (var uid in allUserIds)
-        {
-            if (uid == "00000000") continue;
-            if (!db.Friendships.Any(f => f.UserId == uid && f.FriendUserId == "00000000"))
-            {
-                db.Friendships.Add(new Friendship
-                {
-                    UserId = uid,
-                    FriendUserId = "00000000",
-                    CreatedAt = DateTime.UtcNow,
-                    AlterName = "System"
-                });
-            }
-            if (!db.Friendships.Any(f => f.UserId == "00000000" && f.FriendUserId == uid))
-            {
-                db.Friendships.Add(new Friendship
-                {
-                    UserId = "00000000",
-                    FriendUserId = uid,
-                    CreatedAt = DateTime.UtcNow,
-                    AlterName = ""
-                });
-            }
-        }
-        db.SaveChanges();
-    }
-
     // 在线用户变更信号
     public static event Action? OnlineUsersChanged;
 
@@ -93,17 +46,6 @@ public class AuthController(ServerDbContext db) : ControllerBase
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest req)
     {
-
-        // 禁止登录System账号
-        if (req.UserId == "00000000")
-        {
-            return Ok(new LoginResponse
-            {
-                Success = false,
-                Error = "禁止登录系统账号"
-            });
-        }
-
         var user = await _db.Users.FirstOrDefaultAsync(u => u.UserId == req.UserId);
         if (user == null || user.Password != req.Password)
         {

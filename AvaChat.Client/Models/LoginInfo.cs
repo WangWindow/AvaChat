@@ -15,4 +15,8 @@ public class LoginInfo
     public string? Password { get; set; }
 
     public DateTime LoginTime { get; set; }
+
+    public string DisplayText => $"{UserId} ({LoginTime:MM-dd HH:mm})";
+
+    public bool HasSavedPassword => !string.IsNullOrEmpty(Password);
 }

@@ -21,6 +21,9 @@
         <converters:IsNotCurrentUserConverter x:Key="IsNotCurrentUserConverter" />
         <converters:MessageStatusIconConverter x:Key="MessageStatusIconConverter" />
         <converters:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter" />
+        <converters:StatusTextConverter x:Key="StatusTextConverter" />
+        <converters:DateTimeConverter x:Key="DateTimeConverter" />
+        <converters:AvatarColorConverter x:Key="AvatarColorConverter" />
         <!--  全局托盘图标资源，供C#通过TryGetResource("AppTrayIcon")统一获取  -->
         <WindowIcon x:Key="AppTrayIcon">avares://AvaChat.Client/Assets/avalonia-logo.ico</WindowIcon>
     </Application.Resources>

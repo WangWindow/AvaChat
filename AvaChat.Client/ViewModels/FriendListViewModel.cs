@@ -20,7 +20,12 @@ public partial class FriendListViewModel : ViewModelBase
     public FriendListViewModel()
     {
         FilteredFriends = new ObservableCollection<Friendship>(Friends);
-        _ = LoadFriendsAsync();
+
+        // 只有当用户已登录时才加载好友列表
+        if (!string.IsNullOrEmpty(App.CurrentUserId))
+        {
+            _ = LoadFriendsAsync();
+        }
     }
 
     partial void OnSearchTextChanged(string value)
@@ -34,9 +39,33 @@ public partial class FriendListViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void AddFriend()
+    private async Task AddFriend()
     {
-        // TODO: 打开添加好友对话框
+        try
+        {
+            var dialog = new AddFriendDialog();
+            var viewModel = (AddFriendDialogViewModel)dialog.DataContext!;
+
+            // 订阅关闭事件
+            viewModel.CloseRequested += (s, e) => dialog.Close();
+
+            var mainWindow = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop ? desktop.MainWindow : null;
+            if (mainWindow != null)
+            {
+                await dialog.ShowDialog<bool?>(mainWindow);
+            }
+            else
+            {
+                dialog.Show();
+            }
+
+            // 对话框关闭后刷新好友列表
+            await LoadFriendsAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[AddFriend] Exception: {ex.Message}");
+        }
     }
 
     [RelayCommand]
@@ -68,27 +97,50 @@ public partial class FriendListViewModel : ViewModelBase
         try
         {
             IsLoading = true;
-            var factory = new ClientDbContextFactory();
-            using var db = factory.CreateDbContext([]);
-            // 获取当前用户Id
             var userId = App.CurrentUserId;
+            var serverAddress = App.CurrentServerAddress;
+
             if (string.IsNullOrEmpty(userId))
             {
                 Friends = [];
                 FilteredFriends = [];
+                IsLoading = false;
                 return;
             }
-            // 加载所有好友关系（含System）
-            var friends = db.Friendships
+
+            // 先尝试从服务器同步好友数据
+            if (!string.IsNullOrEmpty(serverAddress))
+            {
+                try
+                {
+                    var api = new ApiService(serverAddress);
+                    var serverFriends = await api.GetFriendshipsAsync(userId);
+                    if (serverFriends != null)
+                    {
+                        // 数据已在ApiService中同步到本地数据库
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[LoadFriendsAsync] Failed to sync from server: {ex.Message}");
+                }
+            }
+
+            // 从本地数据库加载好友列表
+            var factory = new ClientDbContextFactory();
+            using var db = factory.CreateDbContext([]);
+            var friends = await Task.Run(() => db.Friendships
+                .Include(f => f.FriendUser)
                 .Where(f => f.UserId == userId)
                 .OrderBy(f => f.FriendUserId)
-                .ToList();
+                .ToList());
+
             Friends = new ObservableCollection<Friendship>(friends);
             FilterFriends();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // 可根据需要弹窗或日志
+            Console.WriteLine($"[LoadFriendsAsync] Exception: {ex.Message}");
             Friends = [];
             FilteredFriends = [];
         }
@@ -126,6 +178,17 @@ public partial class FriendListViewModel : ViewModelBase
         {
             friend.FriendUser.Status = status;
             FilterFriends();
+        }
+    }
+
+    /// <summary>
+    /// 初始化好友列表（用于登录后调用）
+    /// </summary>
+    public async Task InitializeAsync()
+    {
+        if (!string.IsNullOrEmpty(App.CurrentUserId))
+        {
+            await LoadFriendsAsync();
         }
     }
 }

@@ -16,6 +16,9 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         FriendListViewModel = new FriendListViewModel();
         ChatViewModel = new ChatViewModel();
+
+        // 初始化好友列表
+        _ = InitializeAsync();
     }
 
     public MainWindowViewModel(
@@ -33,5 +36,20 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         // TODO
 
+    }
+
+    /// <summary>
+    /// 初始化主窗口（加载好友列表等）
+    /// </summary>
+    private async Task InitializeAsync()
+    {
+        try
+        {
+            await FriendListViewModel.InitializeAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[MainWindowViewModel.InitializeAsync] Exception: {ex.Message}");
+        }
     }
 }

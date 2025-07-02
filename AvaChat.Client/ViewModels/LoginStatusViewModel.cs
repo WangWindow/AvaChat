@@ -243,18 +243,19 @@ public partial class LoginStatusViewModel : ObservableObject
         {
             var factory = new ClientDbContextFactory();
             using var db = factory.CreateDbContext([]);
-            var setting = db.ClientSettings.FirstOrDefault();
+            var setting = db.ClientSettings.FirstOrDefault(s => s.Key == "ServerAddress");
             if (setting == null)
             {
                 db.ClientSettings.Add(
                     new ClientSetting
                     {
-                        ServerAddress = ServerAddress
+                        Key = "ServerAddress",
+                        Value = ServerAddress
                     });
             }
             else
             {
-                setting.ServerAddress = ServerAddress;
+                setting.Value = ServerAddress;
                 db.ClientSettings.Update(setting);
             }
             db.SaveChanges();

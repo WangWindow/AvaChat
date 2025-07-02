@@ -7,8 +7,10 @@ public class ClientSetting
     [Key]
     public int Id { get; set; }
 
+    [Required]
     [MaxLength(256)]
-    public string ServerAddress { get; set; } = string.Empty;
+    public string Key { get; set; } = string.Empty;
 
-    // 可扩展更多设置项
+    [MaxLength(1024)]
+    public string Value { get; set; } = string.Empty;
 }

@@ -1,4 +1,3 @@
-
 using AvaChat.Client.Models;
 namespace AvaChat.Client.ViewModels;
 
@@ -30,16 +29,33 @@ public partial class LoginViewModel : ViewModelBase
     private string _passwordVisibilityTooltip = "显示密码";
 
     /// <summary>
-    /// 所有已保存账号Id列表（用于下拉选择）
+    /// 所有已保存账号信息列表（用于下拉选择）
     /// </summary>
     [ObservableProperty]
-    private List<string> _userIdList = new();
+    private List<LoginInfo> _accountList = new();
 
     /// <summary>
-    /// 控制账号下拉列表显示
+    /// 当前选中的账号信息
     /// </summary>
     [ObservableProperty]
-    private bool _isUserIdListOpen = false;
+    private LoginInfo? _selectedAccount;
+
+    /// <summary>
+    /// 是否使用自动填充的密码（影响密码显示按钮的可用性）
+    /// </summary>
+    [ObservableProperty]
+    private bool _isUsingAutoFilledPassword = false;
+
+    /// <summary>
+    /// 密码显示按钮是否可用
+    /// </summary>
+    public bool IsPasswordVisibilityEnabled => !IsUsingAutoFilledPassword;
+
+    /// <summary>
+    /// 控制账号列表下拉框是否打开
+    /// </summary>
+    [ObservableProperty]
+    private bool _isAccountListOpen = false;
 
     public LoginViewModel()
     {
@@ -104,10 +120,8 @@ public partial class LoginViewModel : ViewModelBase
                 bool syncSuccess = true;
                 try
                 {
-                    // 用户信息同步
-                    var userData = await api.GetUserDataAsync(UserId);
-                    // 好友关系同步
-                    var friends = await api.GetFriendshipsAsync(UserId);
+                    // 使用新的批量同步API
+                    syncSuccess = await api.BatchSyncAsync(UserId);
                 }
                 catch
                 {
@@ -182,6 +196,12 @@ public partial class LoginViewModel : ViewModelBase
     [RelayCommand]
     private void TogglePasswordVisibility()
     {
+        // 如果使用自动填充密码，禁用密码显示功能
+        if (IsUsingAutoFilledPassword)
+        {
+            return;
+        }
+
         IsPasswordVisible = !IsPasswordVisible;
         PasswordChar = IsPasswordVisible ? '\0' : '●';
         PasswordVisibilityIcon = IsPasswordVisible ? "🙈" : "👁";
@@ -224,19 +244,30 @@ public partial class LoginViewModel : ViewModelBase
         {
             var factory = new ClientDbContextFactory();
             using var db = factory.CreateDbContext([]);
-            // 获取所有已保存账号Id，按Id升序
-            UserIdList = db.LoginInfos
-                .Select(x => x.UserId)
-                .Distinct()
-                .OrderBy(x => x)
+
+            // 加载服务器地址设置
+            var serverSetting = db.ClientSettings.FirstOrDefault(s => s.Key == "ServerAddress");
+            if (serverSetting != null && !string.IsNullOrEmpty(serverSetting.Value))
+            {
+                ServerAddress = serverSetting.Value;
+            }
+
+            // 获取所有已保存账号信息，按最后登录时间降序排列
+            var loginInfos = db.LoginInfos
+                .OrderByDescending(x => x.LoginTime)
                 .ToList();
 
-            // 获取最近一次登录的账号
-            var info = db.LoginInfos.OrderByDescending(x => x.LoginTime).FirstOrDefault();
-            if (info != null)
+            AccountList = loginInfos.Select(info => new LoginInfo
             {
-                UserId = info.UserId;
-                Password = info.Password ?? string.Empty;
+                UserId = info.UserId,
+                Password = info.Password,
+                LoginTime = info.LoginTime
+            }).ToList();
+
+            // 自动选择最近登录的账号
+            if (AccountList.Count > 0)
+            {
+                SelectedAccount = AccountList.First();
             }
         }
         catch { /* 忽略异常 */ }
@@ -264,5 +295,48 @@ public partial class LoginViewModel : ViewModelBase
             db.SaveChanges();
         }
         catch { /* 忽略异常 */ }
+    }
+
+    partial void OnSelectedAccountChanged(LoginInfo? value)
+    {
+        if (value != null)
+        {
+            UserId = value.UserId;
+
+            if (value.HasSavedPassword)
+            {
+                Password = value.Password!;
+                IsUsingAutoFilledPassword = true;
+                IsPasswordVisible = false;
+                PasswordChar = '●';
+                PasswordVisibilityIcon = "👁";
+                PasswordVisibilityTooltip = "自动填充密码不可显示";
+            }
+            else
+            {
+                Password = string.Empty;
+                IsUsingAutoFilledPassword = false;
+                PasswordVisibilityTooltip = "显示密码";
+            }
+
+            OnPropertyChanged(nameof(IsPasswordVisibilityEnabled));
+        }
+    }
+
+    partial void OnPasswordChanged(string value)
+    {
+        if (IsUsingAutoFilledPassword && SelectedAccount?.Password != value)
+        {
+            IsUsingAutoFilledPassword = false;
+            PasswordVisibilityTooltip = "显示密码";
+            OnPropertyChanged(nameof(IsPasswordVisibilityEnabled));
+        }
+    }
+
+    [RelayCommand]
+    private void ShowAccountList()
+    {
+        // 切换账号列表的打开状态
+        IsAccountListOpen = !IsAccountListOpen;
     }
 }

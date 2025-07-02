@@ -38,7 +38,55 @@ public partial class ChatViewModel : ViewModelBase
     [RelayCommand]
     private async Task SendMessageAsync()
     {
-        // TODO
+        if (CurrentFriend == null || string.IsNullOrWhiteSpace(MessageText)) return;
+
+        try
+        {
+            IsSending = true;
+            var currentUserId = App.CurrentUserId;
+            var serverAddress = App.CurrentServerAddress;
+
+            if (string.IsNullOrEmpty(currentUserId) || string.IsNullOrEmpty(serverAddress))
+                return;
+
+            var api = new ApiService(serverAddress);
+            var result = await api.SendMessageAsync(currentUserId, CurrentFriend.FriendUserId, MessageText);
+
+            if (result?.Success == true)
+            {
+                // 创建本地消息记录
+                var message = new Message
+                {
+                    SenderId = currentUserId,
+                    ReceiverId = CurrentFriend.FriendUserId,
+                    Content = MessageText,
+                    Timestamp = DateTime.Now,
+                    MessageType = MessageType.Text,
+                    Status = MessageStatus.Delivered
+                };
+
+                Messages.Add(message);
+                MessageText = string.Empty;
+
+                // 保存到本地数据库
+                var factory = new ClientDbContextFactory();
+                using var db = factory.CreateDbContext([]);
+                db.Messages.Add(message);
+                await db.SaveChangesAsync();
+            }
+            else
+            {
+                Console.WriteLine($"发送消息失败: {result?.Error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[SendMessageAsync] Exception: {ex.Message}");
+        }
+        finally
+        {
+            IsSending = false;
+        }
     }
 
     [RelayCommand]
@@ -58,8 +106,31 @@ public partial class ChatViewModel : ViewModelBase
     private async Task LoadChatHistory()
     {
         if (CurrentFriend == null) return;
-        // TODO: 从数据库或服务器加载聊天历史
 
+        try
+        {
+            var currentUserId = App.CurrentUserId;
+            var serverAddress = App.CurrentServerAddress;
+
+            if (string.IsNullOrEmpty(currentUserId) || string.IsNullOrEmpty(serverAddress))
+                return;
+
+            var api = new ApiService(serverAddress);
+            var messages = await api.GetChatHistoryAsync(currentUserId, CurrentFriend.FriendUserId);
+
+            if (messages != null)
+            {
+                Messages.Clear();
+                foreach (var msg in messages)
+                {
+                    Messages.Add(msg);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[LoadChatHistory] Exception: {ex.Message}");
+        }
     }
 
     private void UpdateStatusText()

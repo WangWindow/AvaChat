@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:AvaChat.Client.Models"
     xmlns:vm="using:AvaChat.Client.ViewModels"
     Title="AvaChat - 登录"
     Width="320"
@@ -53,80 +54,82 @@
         <!--  中间登录表单区域  -->
         <StackPanel Grid.Row="1" Spacing="16">
 
-            <!--  用户号码输入（TextBox+下拉按钮+水印+下拉选择）  -->
-            <Grid>
-                <TextBox
-                    Name="UserIdTextBox"
-                    MinWidth="180"
-                    MaxHeight="180"
+            <!--  账号选择区域  -->
+            <Grid Width="220" HorizontalAlignment="Center">
+                <!--  账号自动完成输入框  -->
+                <AutoCompleteBox
+                    Name="UserIdAutoComplete"
                     Padding="12,8"
-                    HorizontalContentAlignment="Center"
-                    VerticalContentAlignment="Center"
+                    AsyncPopulator="{x:Null}"
                     Background="Transparent"
                     BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                     BorderThickness="1"
                     CornerRadius="8"
+                    FilterMode="StartsWith"
                     FontSize="14"
-                    LostFocus="UserIdTextBox_LostFocus"
+                    IsDropDownOpen="{Binding IsAccountListOpen, Mode=TwoWay}"
+                    ItemsSource="{Binding AccountList}"
+                    MinimumPrefixLength="0"
+                    SelectedItem="{Binding SelectedAccount, Mode=TwoWay}"
                     Text="{Binding UserId, Mode=TwoWay}"
-                    Watermark="请输入8位用户Id或选择历史账号" />
+                    ValueMemberBinding="{Binding UserId}"
+                    Watermark="请输入8位用户ID">
+                    <AutoCompleteBox.Styles>
+                        <Style Selector="AutoCompleteBox /template/ TextBox">
+                            <Setter Property="HorizontalContentAlignment" Value="Center" />
+                        </Style>
+                    </AutoCompleteBox.Styles>
+                    <AutoCompleteBox.ItemTemplate>
+                        <DataTemplate x:DataType="models:LoginInfo">
+                            <Grid ColumnDefinitions="*,Auto" ToolTip.Tip="{Binding LoginTime, StringFormat='最后登录时间: {0:yyyy-MM-dd HH:mm:ss}'}">
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock
+                                        FontSize="14"
+                                        FontWeight="SemiBold"
+                                        Text="{Binding UserId}" />
+                                </StackPanel>
+                                <Border
+                                    Grid.Column="1"
+                                    Background="{DynamicResource SystemControlHighlightAccentBrush}"
+                                    CornerRadius="10"
+                                    IsVisible="{Binding HasSavedPassword}">
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        FontSize="10"
+                                        FontWeight="SemiBold"
+                                        Foreground="White"
+                                        Text="已保存" />
+                                </Border>
+                            </Grid>
+                        </DataTemplate>
+                    </AutoCompleteBox.ItemTemplate>
+                </AutoCompleteBox>
+
+                <!--  下拉按钮指示器  -->
                 <Button
-                    Name="UserIdDropButton"
                     Width="32"
                     Height="32"
-                    Margin="0,4,8,0"
+                    Margin="0,0,8,0"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
                     Background="Transparent"
                     BorderThickness="0"
-                    Click="UserIdDropButton_Click"
-                    ZIndex="1">
-                    <Path
-                        Width="16"
-                        Height="16"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Data="M 0 0 L 8 0 L 4 5 Z"
-                        Fill="Gray"
-                        Stretch="Uniform" />
+                    Command="{Binding ShowAccountListCommand}"
+                    CornerRadius="16"
+                    ToolTip.Tip="查看账号">
+                    <PathIcon
+                        Width="12"
+                        Height="12"
+                        Data="M7 10l5 5 5-5z"
+                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
                 </Button>
-                <Popup
-                    Name="UserIdPopup"
-                    IsOpen="{Binding IsUserIdListOpen, Mode=TwoWay}"
-                    Placement="Bottom"
-                    PlacementTarget="UserIdTextBox">
-                    <Border
-                        MinWidth="180"
-                        MaxHeight="180"
-                        Background="transparent"
-                        BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-                        BorderThickness="1"
-                        CornerRadius="6">
-                        <ListBox
-                            Name="UserIdListBox"
-                            Background="transparent"
-                            CornerRadius="6"
-                            ItemsSource="{Binding UserIdList}"
-                            LostFocus="UserIdListBox_LostFocus"
-                            SelectedItem="{Binding UserId, Mode=TwoWay}"
-                            SelectionChanged="UserIdListBox_SelectionChanged">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        Background="transparent"
-                                        Text="{Binding}" />
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </Border>
-                </Popup>
             </Grid>
 
-            <Grid>
+            <!--  密码输入区域  -->
+            <Grid Width="220" HorizontalAlignment="Center">
                 <!--  密码输入  -->
                 <TextBox
+                    Name="PasswordTextBox"
                     Margin="0,4,0,0"
                     Padding="12,8"
                     HorizontalContentAlignment="Center"
@@ -146,13 +149,24 @@
                     Height="32"
                     Margin="0,4,8,0"
                     HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
+                    VerticalAlignment="Center"
                     Background="Transparent"
                     BorderThickness="0"
                     Command="{Binding TogglePasswordVisibilityCommand}"
                     CornerRadius="16"
+                    IsEnabled="{Binding IsPasswordVisibilityEnabled}"
                     ToolTip.Tip="{Binding PasswordVisibilityTooltip}">
+                    <Button.Styles>
+                        <Style Selector="Button:pointerover">
+                            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundListLowBrush}" />
+                        </Style>
+                        <Style Selector="Button:pressed">
+                            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundListMediumBrush}" />
+                        </Style>
+                    </Button.Styles>
                     <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
                         FontFamily="Segoe MDL2 Assets"
                         FontSize="14"
                         Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"

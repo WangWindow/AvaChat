@@ -58,7 +58,9 @@ public partial class App : Application
             exitItem.Click += app.Exit_Click;
             menu.Add(exitItem);
 
+#pragma warning disable CS8602 // 解引用可能出现空引用。
             MainTrayIcon.Menu = menu;
+#pragma warning restore CS8602 // 解引用可能出现空引用。
         }
     }
 
@@ -112,10 +114,7 @@ public partial class App : Application
 
     private static void Start()
     {
-        var options = new DbContextOptionsBuilder<ClientDbContext>()
-            .UseSqlite("Data Source=AvaChat.Client.db")
-            .Options;
-        using var db = new ClientDbContext(options);
+        var db = new ClientDbContextFactory().CreateDbContext([]);
         db.Database.EnsureCreated();
     }
 
