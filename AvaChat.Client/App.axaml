@@ -21,6 +21,7 @@
         <converters:IsNotCurrentUserConverter x:Key="IsNotCurrentUserConverter" />
         <converters:MessageStatusIconConverter x:Key="MessageStatusIconConverter" />
         <converters:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter" />
+        <converters:ZeroToBoolConverter x:Key="ZeroToBoolConverter" />
         <converters:StatusTextConverter x:Key="StatusTextConverter" />
         <converters:DateTimeConverter x:Key="DateTimeConverter" />
         <converters:AvatarColorConverter x:Key="AvatarColorConverter" />

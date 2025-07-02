@@ -1,0 +1,242 @@
+<Window
+    x:Class="AvaChat.Client.Views.NotificationWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:AvaChat.Client.ViewModels"
+    Title="系统通知"
+    Width="500"
+    Height="600"
+    x:DataType="vm:NotificationViewModel"
+    CanResize="True"
+    ShowInTaskbar="False"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+
+    <Design.DataContext>
+        <vm:NotificationViewModel />
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!--  标题栏  -->
+        <Border
+            Grid.Row="0"
+            Padding="20,16"
+            Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    FontSize="18"
+                    FontWeight="SemiBold"
+                    Text="系统通知" />
+                <Button
+                    Grid.Column="1"
+                    Padding="8,4"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Command="{Binding RefreshCommand}"
+                    Content="刷新"
+                    FontSize="12" />
+            </Grid>
+        </Border>
+
+        <!--  通知列表  -->
+        <Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+            <ScrollViewer Padding="20">
+                <StackPanel Spacing="12">
+                    <!--  好友申请区域  -->
+                    <Expander Header="好友申请" IsExpanded="True">
+                        <StackPanel Spacing="8">
+                            <!--  待处理的好友申请  -->
+                            <ItemsControl ItemsSource="{Binding PendingFriendRequests}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border
+                                            Margin="0,4"
+                                            Padding="16,12"
+                                            Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                                            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="8">
+                                            <Grid RowDefinitions="Auto,Auto,Auto">
+                                                <!--  申请者信息  -->
+                                                <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
+                                                    <!--  头像  -->
+                                                    <Border
+                                                        Grid.Column="0"
+                                                        Width="40"
+                                                        Height="40"
+                                                        Background="{DynamicResource SystemControlHighlightAccentBrush}"
+                                                        CornerRadius="20">
+                                                        <TextBlock
+                                                            HorizontalAlignment="Center"
+                                                            VerticalAlignment="Center"
+                                                            FontSize="16"
+                                                            FontWeight="Bold"
+                                                            Foreground="White"
+                                                            Text="{Binding FromUserName, Converter={StaticResource FirstCharConverter}}" />
+                                                    </Border>
+
+                                                    <!--  用户信息  -->
+                                                    <StackPanel
+                                                        Grid.Column="1"
+                                                        Margin="12,0"
+                                                        VerticalAlignment="Center"
+                                                        Spacing="2">
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            FontWeight="SemiBold"
+                                                            Text="{Binding FromUserName}" />
+                                                        <TextBlock
+                                                            FontSize="12"
+                                                            Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                            Text="{Binding FromUserId, StringFormat='用户ID: {0}'}" />
+                                                    </StackPanel>
+
+                                                    <!--  时间  -->
+                                                    <TextBlock
+                                                        Grid.Column="2"
+                                                        VerticalAlignment="Top"
+                                                        FontSize="11"
+                                                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                        Text="{Binding CreatedAt, StringFormat='{}{0:MM-dd HH:mm}'}" />
+                                                </Grid>
+
+                                                <!--  申请消息  -->
+                                                <TextBlock
+                                                    Grid.Row="1"
+                                                    Margin="0,8,0,12"
+                                                    FontSize="13"
+                                                    Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                                                    Text="{Binding Message}"
+                                                    TextWrapping="Wrap" />
+
+                                                <!--  操作按钮  -->
+                                                <StackPanel
+                                                    Grid.Row="2"
+                                                    HorizontalAlignment="Right"
+                                                    Orientation="Horizontal"
+                                                    Spacing="8">
+                                                    <Button
+                                                        Padding="12,6"
+                                                        Background="{DynamicResource SystemControlHighlightAccentBrush}"
+                                                        BorderThickness="0"
+                                                        Command="{Binding $parent[ItemsControl].((vm:NotificationViewModel)DataContext).AcceptFriendRequestCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="接受"
+                                                        CornerRadius="4"
+                                                        Foreground="White" />
+                                                    <Button
+                                                        Padding="12,6"
+                                                        Background="Transparent"
+                                                        BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                                        BorderThickness="1"
+                                                        Command="{Binding $parent[ItemsControl].((vm:NotificationViewModel)DataContext).RejectFriendRequestCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="拒绝"
+                                                        CornerRadius="4" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!--  无好友申请提示  -->
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                FontSize="14"
+                                Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                IsVisible="{Binding PendingFriendRequests.Count, Converter={StaticResource ZeroToVisibilityConverter}}"
+                                Text="暂无待处理的好友申请" />
+                        </StackPanel>
+                    </Expander>
+
+                    <!--  系统消息区域  -->
+                    <Expander Header="系统消息" IsExpanded="True">
+                        <StackPanel Spacing="8">
+                            <!--  系统消息列表  -->
+                            <ItemsControl ItemsSource="{Binding SystemMessages}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border
+                                            Margin="0,4"
+                                            Padding="12,8"
+                                            Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                                            CornerRadius="6">
+                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                                <Border
+                                                    Grid.Column="0"
+                                                    Width="24"
+                                                    Height="24"
+                                                    Margin="0,0,8,0"
+                                                    Background="{DynamicResource SystemControlHighlightAccentBrush}"
+                                                    CornerRadius="12">
+                                                    <TextBlock
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="12"
+                                                        FontWeight="Bold"
+                                                        Foreground="White"
+                                                        Text="系" />
+                                                </Border>
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="13"
+                                                    Text="{Binding Content}"
+                                                    TextWrapping="Wrap" />
+                                                <TextBlock
+                                                    Grid.Column="2"
+                                                    VerticalAlignment="Top"
+                                                    FontSize="11"
+                                                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                    Text="{Binding Timestamp, StringFormat='{}{0:MM-dd HH:mm}'}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!--  无系统消息提示  -->
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                FontSize="14"
+                                Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                IsVisible="{Binding SystemMessages.Count, Converter={StaticResource ZeroToVisibilityConverter}}"
+                                Text="暂无系统消息" />
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!--  底部状态栏  -->
+        <Border
+            Grid.Row="2"
+            Padding="20,12"
+            Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+            BorderThickness="0,1,0,0">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    FontSize="12"
+                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                    Text="{Binding LastUpdateTime, StringFormat='最后更新: {0:HH:mm:ss}'}" />
+                <Button
+                    Grid.Column="1"
+                    Padding="16,8"
+                    Background="Transparent"
+                    BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                    BorderThickness="1"
+                    Command="{Binding CloseCommand}"
+                    Content="关闭"
+                    CornerRadius="4" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

@@ -133,7 +133,17 @@ public partial class LoginViewModel : ViewModelBase
                 App.OnUserLogin(UserId, ServerAddress);
 
                 // 打开主窗口
-                var mainWindow = new MainWindow();
+                var mainWindow = new MainWindow
+                {
+                    DataContext = new MainWindowViewModel()
+                };
+
+                // 设置为应用程序的主窗口
+                if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                {
+                    desktop.MainWindow = mainWindow;
+                }
+
                 mainWindow.Show();
 
                 // 关闭登录窗口

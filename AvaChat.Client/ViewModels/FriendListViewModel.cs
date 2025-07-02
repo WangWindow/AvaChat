@@ -49,10 +49,11 @@ public partial class FriendListViewModel : ViewModelBase
             // 订阅关闭事件
             viewModel.CloseRequested += (s, e) => dialog.Close();
 
-            var mainWindow = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop ? desktop.MainWindow : null;
-            if (mainWindow != null)
+            // 获取当前主窗口作为父窗口
+            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
+                desktop.MainWindow != null)
             {
-                await dialog.ShowDialog<bool?>(mainWindow);
+                await dialog.ShowDialog<bool?>(desktop.MainWindow);
             }
             else
             {
@@ -87,7 +88,7 @@ public partial class FriendListViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task RefreshAsync()
+    public async Task RefreshAsync()
     {
         await LoadFriendsAsync();
     }

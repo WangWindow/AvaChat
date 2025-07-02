@@ -55,6 +55,20 @@ public class FriendController(ServerDbContext db) : ControllerBase
         };
 
         _db.FriendRequests.Add(friendRequest);
+
+        // 发送系统消息给申请发送者
+        var systemUserId = "00000000"; // 系统用户ID
+        var messageToSender = new Message
+        {
+            SenderId = systemUserId,
+            ReceiverId = req.FromUserId,
+            Content = $"好友申请已发送给 {toUser.UserName}，请等待对方回应",
+            Timestamp = DateTime.UtcNow,
+            MessageType = MessageType.System,
+            Status = MessageStatus.Delivered
+        };
+
+        _db.Messages.Add(messageToSender);
         await _db.SaveChangesAsync();
 
         return Ok(new AddFriendResponse { Success = true });
@@ -95,11 +109,57 @@ public class FriendController(ServerDbContext db) : ControllerBase
 
             _db.Friendships.AddRange(friendship1, friendship2);
             friendRequest.Status = FriendRequestStatus.Accepted;
+
+            // 发送系统消息给双方
+            var toUser = await _db.Users.FindAsync(req.UserId);
+            var fromUser = friendRequest.FromUser;
+
+            var systemUserId = "00000000"; // 系统用户ID
+
+            // 给申请接受者发送消息
+            var messageToAcceptor = new Message
+            {
+                SenderId = systemUserId,
+                ReceiverId = req.UserId,
+                Content = $"您已与 {fromUser.UserName} 成为好友",
+                Timestamp = DateTime.UtcNow,
+                MessageType = MessageType.System,
+                Status = MessageStatus.Delivered
+            };
+
+            // 给申请发送者发送消息
+            var messageToSender = new Message
+            {
+                SenderId = systemUserId,
+                ReceiverId = req.FromUserId,
+                Content = $"{toUser?.UserName ?? "用户"} 已接受您的好友申请",
+                Timestamp = DateTime.UtcNow,
+                MessageType = MessageType.System,
+                Status = MessageStatus.Delivered
+            };
+
+            _db.Messages.AddRange(messageToAcceptor, messageToSender);
         }
         else
         {
             // 拒绝好友申请
             friendRequest.Status = FriendRequestStatus.Rejected;
+
+            // 发送系统消息给申请发送者
+            var toUser = await _db.Users.FindAsync(req.UserId);
+            var systemUserId = "00000000"; // 系统用户ID
+
+            var messageToSender = new Message
+            {
+                SenderId = systemUserId,
+                ReceiverId = req.FromUserId,
+                Content = $"{toUser?.UserName ?? "用户"} 已拒绝您的好友申请",
+                Timestamp = DateTime.UtcNow,
+                MessageType = MessageType.System,
+                Status = MessageStatus.Delivered
+            };
+
+            _db.Messages.Add(messageToSender);
         }
 
         await _db.SaveChangesAsync();

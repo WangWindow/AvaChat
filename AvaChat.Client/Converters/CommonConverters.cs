@@ -86,8 +86,7 @@ public class IsCurrentUserConverter : IValueConverter
     {
         if (value is string senderNumber)
         {
-            // TODO: 从应用状态获取当前用户号码
-            return senderNumber == "10000001"; // 临时硬编码
+            return senderNumber == App.CurrentUserId;
         }
         return false;
     }
@@ -107,8 +106,7 @@ public class IsNotCurrentUserConverter : IValueConverter
     {
         if (value is string senderNumber)
         {
-            // TODO: 从应用状态获取当前用户号码
-            return senderNumber != "10000001"; // 临时硬编码
+            return senderNumber != App.CurrentUserId;
         }
         return true;
     }
@@ -174,6 +172,26 @@ public class StatusTextConverter : IValueConverter
 /// 零值到可见性转换器
 /// </summary>
 public class ZeroToVisibilityConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is int count)
+        {
+            return count == 0;
+        }
+        return true;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// 零值到布尔值转换器
+/// </summary>
+public class ZeroToBoolConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
