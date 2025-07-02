@@ -130,13 +130,36 @@ public partial class FriendListViewModel : ViewModelBase
             // 从本地数据库加载好友列表
             var factory = new ClientDbContextFactory();
             using var db = factory.CreateDbContext([]);
-            var friends = await Task.Run(() => db.Friendships
-                .Include(f => f.FriendUser)
+
+            var friendships = await Task.Run(() => db.Friendships
                 .Where(f => f.UserId == userId)
                 .OrderBy(f => f.FriendUserId)
                 .ToList());
 
-            Friends = new ObservableCollection<Friendship>(friends);
+            // 手动加载好友用户信息
+            foreach (var friendship in friendships)
+            {
+                var friendUser = await Task.Run(() => db.Users
+                    .FirstOrDefault(u => u.UserId == friendship.FriendUserId));
+
+                if (friendUser != null)
+                {
+                    friendship.FriendUser = friendUser;
+                }
+                else
+                {
+                    // 如果本地没有好友用户信息，创建一个基本的 UserInfo
+                    friendship.FriendUser = new UserInfo
+                    {
+                        UserId = friendship.FriendUserId,
+                        UserName = friendship.FriendUserId, // 使用用户ID作为默认显示名
+                        Status = UserStatus.Offline,
+                        LastLoginTime = DateTime.MinValue
+                    };
+                }
+            }
+
+            Friends = new ObservableCollection<Friendship>(friendships);
             FilterFriends();
         }
         catch (Exception ex)
@@ -161,7 +184,7 @@ public partial class FriendListViewModel : ViewModelBase
         {
             var lower = SearchText.ToLowerInvariant();
             var filtered = Friends.Where(f =>
-                (f.FriendUser.UserName?.ToLowerInvariant().Contains(lower, StringComparison.InvariantCultureIgnoreCase) ?? false)
+                (f.FriendUser?.UserName?.ToLowerInvariant().Contains(lower, StringComparison.InvariantCultureIgnoreCase) ?? false)
                 || (f.FriendUserId?.Contains(lower) ?? false)
             ).ToList();
             FilteredFriends = new ObservableCollection<Friendship>(filtered);
@@ -174,7 +197,7 @@ public partial class FriendListViewModel : ViewModelBase
     public void UpdateFriendStatus(string userId, UserStatus status)
     {
         var friend = Friends.FirstOrDefault(f => f.UserId == userId);
-        if (friend != null)
+        if (friend?.FriendUser != null)
         {
             friend.FriendUser.Status = status;
             FilterFriends();
@@ -188,7 +211,7 @@ public partial class FriendListViewModel : ViewModelBase
     {
         // 查找好友
         var friend = Friends.FirstOrDefault(f => f.FriendUserId == userId);
-        if (friend != null)
+        if (friend?.FriendUser != null)
         {
             // 更新状态
             friend.FriendUser.Status = status;

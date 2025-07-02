@@ -113,114 +113,168 @@ public class FriendController(ServerDbContext db, IHubContext<ChatHub> hubContex
     [HttpPost("handle")]
     public async Task<ActionResult<HandleFriendRequestResponse>> HandleFriendRequest([FromBody] HandleFriendRequestRequest req)
     {
-        // 查找待处理的好友申请
-        var friendRequest = await _db.FriendRequests
-            .FirstOrDefaultAsync(r => r.FromUserId == req.FromUserId && r.ToUserId == req.UserId && r.Status == FriendRequestStatus.Pending);
-
-        if (friendRequest == null)
+        try
         {
-            return Ok(new HandleFriendRequestResponse { Success = false, Error = "未找到待处理的好友申请" });
+            Console.WriteLine($"[HandleFriendRequest] 收到请求: UserId={req.UserId}, FromUserId={req.FromUserId}, Accept={req.Accept}");
+
+            // 查找待处理的好友申请
+            var friendRequest = await _db.FriendRequests
+                .FirstOrDefaultAsync(r => r.FromUserId == req.FromUserId && r.ToUserId == req.UserId && r.Status == FriendRequestStatus.Pending);
+
+            if (friendRequest == null)
+            {
+                Console.WriteLine($"[HandleFriendRequest] 未找到待处理的好友申请: FromUserId={req.FromUserId}, ToUserId={req.UserId}");
+                return Ok(new HandleFriendRequestResponse { Success = false, Error = "未找到待处理的好友申请" });
+            }
+
+            // 获取发送者和接收者信息
+            var fromUser = await _db.Users.FindAsync(req.FromUserId);
+            var toUser = await _db.Users.FindAsync(req.UserId);
+
+            if (fromUser == null || toUser == null)
+            {
+                Console.WriteLine($"[HandleFriendRequest] 用户信息不存在: fromUser={fromUser != null}, toUser={toUser != null}");
+                return Ok(new HandleFriendRequestResponse { Success = false, Error = "用户信息不存在" });
+            }
+
+            if (req.Accept)
+            {
+                Console.WriteLine($"[HandleFriendRequest] 准备接受好友申请");
+
+                // 检查是否已经是好友关系（防止重复添加）
+                var existingFriendship = await _db.Friendships.AnyAsync(f =>
+                    (f.UserId == req.UserId && f.FriendUserId == req.FromUserId) ||
+                    (f.UserId == req.FromUserId && f.FriendUserId == req.UserId));
+
+                if (existingFriendship)
+                {
+                    Console.WriteLine($"[HandleFriendRequest] 已经是好友关系");
+                    friendRequest.Status = FriendRequestStatus.Accepted;
+                    await _db.SaveChangesAsync();
+                    return Ok(new HandleFriendRequestResponse { Success = true });
+                }
+
+                // 接受好友申请 - 建立双向好友关系
+                var friendship1 = new Friendship
+                {
+                    UserId = req.UserId,
+                    FriendUserId = req.FromUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    FriendUser = new UserInfo
+                    {
+                        UserId = fromUser.UserId,
+                        UserName = fromUser.UserName,
+                        Status = fromUser.Status,
+                        LastLoginTime = fromUser.LastLoginTime
+                    }
+                };
+
+                var friendship2 = new Friendship
+                {
+                    UserId = req.FromUserId,
+                    FriendUserId = req.UserId,
+                    CreatedAt = DateTime.UtcNow,
+                    FriendUser = new UserInfo
+                    {
+                        UserId = toUser.UserId,
+                        UserName = toUser.UserName,
+                        Status = toUser.Status,
+                        LastLoginTime = toUser.LastLoginTime
+                    }
+                };
+
+                _db.Friendships.AddRange(friendship1, friendship2);
+                friendRequest.Status = FriendRequestStatus.Accepted;
+
+                Console.WriteLine($"[HandleFriendRequest] 已添加好友关系到数据库");
+
+                // 给申请接受者发送消息
+                var messageToAcceptor = new Message
+                {
+                    SenderId = "system",
+                    ReceiverId = req.UserId,
+                    Content = $"您已与 {friendRequest.FromUserName} 成为好友",
+                    Timestamp = DateTime.UtcNow,
+                    MessageType = MessageType.System,
+                    Status = MessageStatus.Delivered
+                };
+
+                // 给申请发送者发送消息
+                var messageToSender = new Message
+                {
+                    SenderId = "system",
+                    ReceiverId = req.FromUserId,
+                    Content = $"{toUser.UserName} 已接受您的好友申请",
+                    Timestamp = DateTime.UtcNow,
+                    MessageType = MessageType.System,
+                    Status = MessageStatus.Delivered
+                };
+
+                _db.Messages.AddRange(messageToAcceptor, messageToSender);
+
+                Console.WriteLine($"[HandleFriendRequest] 准备保存到数据库");
+                await _db.SaveChangesAsync();
+                Console.WriteLine($"[HandleFriendRequest] 成功保存到数据库");
+
+                // 通过SignalR发送系统消息通知
+                try
+                {
+                    // 通知申请接收者
+                    await _hubContext.Clients.Group(req.UserId).SendAsync("ReceiveSystemMessage", messageToAcceptor);
+
+                    // 通知申请发送者
+                    await _hubContext.Clients.Group(req.FromUserId).SendAsync("ReceiveSystemMessage", messageToSender);
+
+                    Console.WriteLine($"[HandleFriendRequest] 已通过SignalR发送通知");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[HandleFriendRequest] 发送SignalR消息失败: {ex.Message}");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"[HandleFriendRequest] 准备拒绝好友申请");
+
+                // 拒绝好友申请
+                friendRequest.Status = FriendRequestStatus.Rejected;
+
+                var messageToSender = new Message
+                {
+                    SenderId = "system",
+                    ReceiverId = req.FromUserId,
+                    Content = $"{toUser.UserName} 已拒绝您的好友申请",
+                    Timestamp = DateTime.UtcNow,
+                    MessageType = MessageType.System,
+                    Status = MessageStatus.Delivered
+                };
+
+                _db.Messages.Add(messageToSender);
+
+                Console.WriteLine($"[HandleFriendRequest] 准备保存拒绝信息到数据库");
+                await _db.SaveChangesAsync();
+                Console.WriteLine($"[HandleFriendRequest] 成功保存拒绝信息到数据库");
+
+                // 通过SignalR发送系统消息通知
+                try
+                {
+                    await _hubContext.Clients.Group(req.FromUserId).SendAsync("ReceiveSystemMessage", messageToSender);
+                    Console.WriteLine($"[HandleFriendRequest] 已通过SignalR发送拒绝通知");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[HandleFriendRequest] 发送SignalR消息失败: {ex.Message}");
+                }
+            }
+
+            return Ok(new HandleFriendRequestResponse { Success = true });
         }
-
-        // 获取发送者和接收者信息
-        var fromUser = await _db.Users.FindAsync(req.FromUserId);
-        var toUser = await _db.Users.FindAsync(req.UserId);
-
-        if (fromUser == null || toUser == null)
+        catch (Exception ex)
         {
-            return Ok(new HandleFriendRequestResponse { Success = false, Error = "用户信息不存在" });
+            Console.WriteLine($"[HandleFriendRequest] 异常: {ex.Message}");
+            Console.WriteLine($"[HandleFriendRequest] 堆栈跟踪: {ex.StackTrace}");
+            return StatusCode(500, new HandleFriendRequestResponse { Success = false, Error = $"服务器错误: {ex.Message}" });
         }
-
-        if (req.Accept)
-        {
-            // 接受好友申请 - 建立双向好友关系
-            var friendship1 = new Friendship
-            {
-                UserId = req.UserId,
-                FriendUserId = req.FromUserId,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            var friendship2 = new Friendship
-            {
-                UserId = req.FromUserId,
-                FriendUserId = req.UserId,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _db.Friendships.AddRange(friendship1, friendship2);
-            friendRequest.Status = FriendRequestStatus.Accepted;
-
-            // 给申请接受者发送消息
-            var messageToAcceptor = new Message
-            {
-                SenderId = "system",
-                ReceiverId = req.UserId,
-                Content = $"您已与 {friendRequest.FromUserName} 成为好友",
-                Timestamp = DateTime.UtcNow,
-                MessageType = MessageType.System,
-                Status = MessageStatus.Delivered
-            };
-
-            // 给申请发送者发送消息
-            var messageToSender = new Message
-            {
-                SenderId = "system",
-                ReceiverId = req.FromUserId,
-                Content = $"{toUser.UserName} 已接受您的好友申请",
-                Timestamp = DateTime.UtcNow,
-                MessageType = MessageType.System,
-                Status = MessageStatus.Delivered
-            };
-
-            _db.Messages.AddRange(messageToAcceptor, messageToSender);
-
-            // 通过SignalR发送系统消息通知
-            try
-            {
-                // 通知申请接收者
-                await _hubContext.Clients.Group(req.UserId).SendAsync("ReceiveSystemMessage", messageToAcceptor);
-
-                // 通知申请发送者
-                await _hubContext.Clients.Group(req.FromUserId).SendAsync("ReceiveSystemMessage", messageToSender);
-            }
-            catch (Exception ex)
-            {
-                // 记录异常但不影响主流程
-                Console.WriteLine($"[HandleFriendRequest] 发送SignalR消息失败: {ex.Message}");
-            }
-        }
-        else
-        {
-            // 拒绝好友申请
-            friendRequest.Status = FriendRequestStatus.Rejected;
-
-            var messageToSender = new Message
-            {
-                SenderId = "system",
-                ReceiverId = req.FromUserId,
-                Content = $"{toUser.UserName} 已拒绝您的好友申请",
-                Timestamp = DateTime.UtcNow,
-                MessageType = MessageType.System,
-                Status = MessageStatus.Delivered
-            };
-
-            _db.Messages.Add(messageToSender);
-
-            // 通过SignalR发送系统消息通知
-            try
-            {
-                await _hubContext.Clients.Group(req.FromUserId).SendAsync("ReceiveSystemMessage", messageToSender);
-            }
-            catch (Exception ex)
-            {
-                // 记录异常但不影响主流程
-                Console.WriteLine($"[HandleFriendRequest] 发送SignalR消息失败: {ex.Message}");
-            }
-        }
-
-        await _db.SaveChangesAsync();
-        return Ok(new HandleFriendRequestResponse { Success = true });
     }
 
     // 获取待处理的好友申请列表

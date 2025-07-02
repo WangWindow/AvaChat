@@ -133,61 +133,101 @@ public class ApiService(string baseUrl)
         }
     }
 
-    // 获取好友关系列表（本地优先，云端兜底）
+    // 获取好友关系列表（从服务器获取最新数据）
     public async Task<List<Friendship>?> GetFriendshipsAsync(string userId)
     {
         var factory = new ClientDbContextFactory();
-        using (var db = factory.CreateDbContext([]))
-        {
-            var local = db.Friendships.Where(f => f.UserId == userId).ToList();
-            if (local.Count > 0)
-                return local;
-        }
-        // 云端拉取
+
+        // 直接从云端拉取最新数据
         var url = _baseUrl + $"/api/sync/friends?userId={userId}";
         var resp = await _httpClient.GetAsync(url);
-        if (!resp.IsSuccessStatusCode) return null;
+        if (!resp.IsSuccessStatusCode)
+        {
+            // 如果服务器请求失败，尝试返回本地缓存
+            using var db = factory.CreateDbContext([]);
+            var local = db.Friendships.Where(f => f.UserId == userId).ToList();
+            return local.Count > 0 ? local : null;
+        }
+
         var content = await resp.Content.ReadAsStringAsync();
         Console.WriteLine($"[GetFriendshipsAsync] url={url}, status={resp.StatusCode}, content={content}");
         try
         {
-            // 反序列化为DTO后可映射为本地Friendship
             var dtos = JsonSerializer.Deserialize<List<Friendship>>(content);
             if (dtos == null) return null;
+
+            Console.WriteLine($"[GetFriendshipsAsync] 反序列化成功，获得 {dtos.Count} 个好友关系");
+
             var friendships = dtos
-                .Where(d => d.FriendshipId != 0 || d.FriendUserId == "system")
                 .Select(d => new Friendship
                 {
                     FriendshipId = d.FriendshipId,
                     UserId = d.UserId,
                     FriendUserId = d.FriendUserId,
                     CreatedAt = d.CreatedAt,
+                    FriendUser = d.FriendUser
                 }).ToList();
+
+            Console.WriteLine($"[GetFriendshipsAsync] 准备保存 {friendships.Count} 个好友关系到本地数据库");
+
+            // 调试：输出每个好友关系的详细信息
+            for (int i = 0; i < friendships.Count; i++)
+            {
+                var f = friendships[i];
+                Console.WriteLine($"[GetFriendshipsAsync] 好友关系 {i}: Id={f.FriendshipId}, UserId='{f.UserId}', FriendUserId='{f.FriendUserId}', CreatedAt={f.CreatedAt}");
+                if (f.FriendUser != null)
+                {
+                    Console.WriteLine($"[GetFriendshipsAsync] 好友用户信息: UserId='{f.FriendUser.UserId}', UserName='{f.FriendUser.UserName}'");
+                }
+            }
+
             using (var db = factory.CreateDbContext([]))
             {
+                // 先清除现有的好友关系，然后添加新的
+                var existingFriendships = db.Friendships.Where(f => f.UserId == userId).ToList();
+                db.Friendships.RemoveRange(existingFriendships);
+
                 foreach (var f in friendships)
                 {
-                    // 仅当FriendshipId为0且FriendUserId不是System时跳过
-                    if (f.FriendshipId == 0 && f.FriendUserId != "system")
+                    // 保存或更新好友用户信息
+                    if (f.FriendUser != null)
                     {
-                        Console.WriteLine($"[GetFriendshipsAsync] Skip friendship with FriendshipId=0, UserId={f.UserId}, FriendUserId={f.FriendUserId}");
-                        continue;
+                        var friendUser = db.Users.FirstOrDefault(u => u.UserId == f.FriendUserId);
+                        if (friendUser != null)
+                        {
+                            friendUser.UserName = f.FriendUser.UserName;
+                            friendUser.Status = f.FriendUser.Status;
+                            friendUser.LastLoginTime = f.FriendUser.LastLoginTime;
+                        }
+                        else
+                        {
+                            db.Users.Add(f.FriendUser);
+                        }
                     }
-                    var exist = db.Friendships.FirstOrDefault(x => x.FriendshipId == f.FriendshipId && x.FriendUserId == f.FriendUserId);
-                    if (exist != null)
+
+                    // 添加好友关系（不包含导航属性）
+                    var existingFriendship = db.Friendships.FirstOrDefault(ef => ef.UserId == f.UserId && ef.FriendUserId == f.FriendUserId);
+                    if (existingFriendship == null)
                     {
-                        exist.UserId = f.UserId;
-                        exist.FriendUserId = f.FriendUserId;
-                        exist.CreatedAt = f.CreatedAt;
-                        Console.WriteLine($"[GetFriendshipsAsync] Update local friendship: {f.FriendshipId}, FriendUserId: {f.FriendUserId}");
+                        db.Friendships.Add(new Friendship
+                        {
+                            UserId = f.UserId,
+                            FriendUserId = f.FriendUserId,
+                            CreatedAt = f.CreatedAt
+                        });
+                        Console.WriteLine($"[GetFriendshipsAsync] Add local friendship: UserId={f.UserId}, FriendUserId: {f.FriendUserId}");
                     }
                     else
                     {
-                        db.Friendships.Add(f);
-                        Console.WriteLine($"[GetFriendshipsAsync] Add local friendship: {f.FriendshipId}, FriendUserId: {f.FriendUserId}");
+                        Console.WriteLine($"[GetFriendshipsAsync] 好友关系已存在，跳过: UserId={f.UserId}, FriendUserId: {f.FriendUserId}");
                     }
                 }
-                db.SaveChanges();
+                var savedCount = db.SaveChanges();
+                Console.WriteLine($"[GetFriendshipsAsync] 数据库保存完成，影响行数: {savedCount}");
+
+                // 验证保存结果
+                var savedFriendships = db.Friendships.Where(f => f.UserId == userId).ToList();
+                Console.WriteLine($"[GetFriendshipsAsync] 验证：本地数据库现在有 {savedFriendships.Count} 个好友关系");
             }
             return friendships;
         }
@@ -500,26 +540,34 @@ public class ApiService(string baseUrl)
                     var existingFriendships = db.Friendships.Where(f => f.UserId == userId).ToList();
                     db.Friendships.RemoveRange(existingFriendships);
 
-                    // 添加新的好友关系
+                    // 先保存所有的用户信息
                     foreach (var friendship in syncResponse.Friendships)
                     {
-                        // 保存或更新好友用户信息
-                        var friendUser = db.Users.FirstOrDefault(u => u.UserId == friendship.FriendUserId);
-                        if (friendUser != null)
+                        if (friendship.FriendUser != null)
                         {
-                            friendUser.UserName = friendship.FriendUser.UserName;
-                            friendUser.Status = friendship.FriendUser.Status;
-                            friendUser.LastLoginTime = friendship.FriendUser.LastLoginTime;
+                            // 保存或更新好友用户信息
+                            var friendUser = db.Users.FirstOrDefault(u => u.UserId == friendship.FriendUserId);
+                            if (friendUser != null)
+                            {
+                                friendUser.UserName = friendship.FriendUser.UserName;
+                                friendUser.Status = friendship.FriendUser.Status;
+                                friendUser.LastLoginTime = friendship.FriendUser.LastLoginTime;
+                            }
+                            else
+                            {
+                                db.Users.Add(friendship.FriendUser);
+                            }
                         }
-                        else
-                        {
-                            db.Users.Add(friendship.FriendUser);
-                        }
+                    }
 
-                        // 添加好友关系
+                    // 保存用户信息的更改
+                    await db.SaveChangesAsync();
+
+                    // 然后添加好友关系（不包含导航属性）
+                    foreach (var friendship in syncResponse.Friendships)
+                    {
                         db.Friendships.Add(new Friendship
                         {
-                            FriendshipId = friendship.FriendshipId,
                             UserId = friendship.UserId,
                             FriendUserId = friendship.FriendUserId,
                             CreatedAt = friendship.CreatedAt
@@ -564,6 +612,11 @@ public class ApiService(string baseUrl)
         catch (Exception ex)
         {
             Console.WriteLine($"[BatchSyncAsync] 异常: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"[BatchSyncAsync] 内部异常: {ex.InnerException.Message}");
+            }
+            Console.WriteLine($"[BatchSyncAsync] 堆栈跟踪: {ex.StackTrace}");
             return false;
         }
     }

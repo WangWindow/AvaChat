@@ -62,18 +62,42 @@ public partial class ChatViewModel : ViewModelBase
                 // 需要在UI线程上操作集合
                 Dispatcher.UIThread.InvokeAsync(() =>
                 {
-                    Messages.Add(message);
+                    // 检查消息是否已存在，避免重复添加
+                    var exists = Messages.Any(m => m.MessageId == message.MessageId);
+                    if (!exists)
+                    {
+                        Messages.Add(message);
+                        Console.WriteLine($"[ChatViewModel] 添加收到的消息到UI: {message.MessageId}, 发送者: {message.SenderId}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[ChatViewModel] 消息已存在，跳过: {message.MessageId}");
+                    }
                 });
             }
         };
 
-        // 消息发送成功回调
+        // 消息发送成功回调 - 只处理自己发送的消息的立即显示
         signalRClient.OnMessageSent += (sender, message) =>
         {
             // 需要在UI线程上操作集合
             Dispatcher.UIThread.InvokeAsync(() =>
             {
-                Messages.Add(message);
+                // 检查是否是当前聊天的消息且是自己发送的
+                if (CurrentFriend != null && message.ReceiverId == CurrentFriend.FriendUserId)
+                {
+                    // 检查消息是否已存在，避免重复添加
+                    var exists = Messages.Any(m => m.MessageId == message.MessageId);
+                    if (!exists)
+                    {
+                        Messages.Add(message);
+                        Console.WriteLine($"[ChatViewModel] 立即显示发送的消息: {message.MessageId}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[ChatViewModel] 发送的消息已存在: {message.MessageId}");
+                    }
+                }
             });
         };
 

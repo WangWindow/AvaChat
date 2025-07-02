@@ -32,24 +32,28 @@ public class SyncController(ServerDbContext db) : ControllerBase
     public async Task<ActionResult<List<Friendship>>> GetFriends([FromQuery] string userId)
     {
         var friends = await _db.Friendships
-            .Include(f => f.FriendUser)
             .Where(f => f.UserId == userId)
             .ToListAsync();
 
-        var result = friends.Select(f => new Friendship
+        var result = new List<Friendship>();
+        foreach (var f in friends)
         {
-            FriendshipId = f.FriendshipId,
-            UserId = f.UserId,
-            FriendUserId = f.FriendUserId,
-            CreatedAt = f.CreatedAt,
-            FriendUser = new UserInfo
+            var friendUser = await _db.Users.FirstOrDefaultAsync(u => u.UserId == f.FriendUserId);
+            result.Add(new Friendship
             {
-                UserId = f.FriendUser.UserId,
-                UserName = f.FriendUser.UserName,
-                Status = f.FriendUser.Status,
-                LastLoginTime = f.FriendUser.LastLoginTime
-            }
-        }).ToList();
+                FriendshipId = f.FriendshipId,
+                UserId = f.UserId,
+                FriendUserId = f.FriendUserId,
+                CreatedAt = f.CreatedAt,
+                FriendUser = friendUser != null ? new UserInfo
+                {
+                    UserId = friendUser.UserId,
+                    UserName = friendUser.UserName,
+                    Status = friendUser.Status,
+                    LastLoginTime = friendUser.LastLoginTime
+                } : null
+            });
+        }
         return Ok(result);
     }
 
@@ -84,25 +88,31 @@ public class SyncController(ServerDbContext db) : ControllerBase
             // 2. 同步好友关系列表
             Console.WriteLine($"[BatchSync] 开始同步好友关系");
             var friends = await _db.Friendships
-                .Include(f => f.FriendUser)
                 .Where(f => f.UserId == req.UserId)
                 .ToListAsync();
             Console.WriteLine($"[BatchSync] 找到 {friends.Count} 个好友关系");
 
-            response.Friendships = friends.Select(f => new Friendship
+            var friendships = new List<Friendship>();
+            foreach (var f in friends)
             {
-                FriendshipId = f.FriendshipId,
-                UserId = f.UserId,
-                FriendUserId = f.FriendUserId,
-                CreatedAt = f.CreatedAt,
-                FriendUser = new UserInfo
+                var friendUser = await _db.Users.FirstOrDefaultAsync(u => u.UserId == f.FriendUserId);
+                friendships.Add(new Friendship
                 {
-                    UserId = f.FriendUser.UserId,
-                    UserName = f.FriendUser.UserName,
-                    Status = f.FriendUser.Status,
-                    LastLoginTime = f.FriendUser.LastLoginTime
-                }
-            }).ToList();
+                    FriendshipId = f.FriendshipId,
+                    UserId = f.UserId,
+                    FriendUserId = f.FriendUserId,
+                    CreatedAt = f.CreatedAt,
+                    FriendUser = friendUser != null ? new UserInfo
+                    {
+                        UserId = friendUser.UserId,
+                        UserName = friendUser.UserName,
+                        Status = friendUser.Status,
+                        LastLoginTime = friendUser.LastLoginTime
+                    } : null
+                });
+            }
+
+            response.Friendships = friendships;
 
             // 3. 同步聊天记录（根据时间戳增量同步）
             var messageQuery = _db.Messages

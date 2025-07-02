@@ -5,10 +5,7 @@ namespace AvaChat.Client.Models;
 
 public class LoginInfo
 {
-    [Key]
-    public int Id { get; set; }
-
-    [Required, MaxLength(32)]
+    [Key, Required, MaxLength(32)]
     public string UserId { get; set; } = string.Empty;
 
     [MaxLength(128)]

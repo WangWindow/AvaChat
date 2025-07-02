@@ -63,8 +63,7 @@
                         Padding="12,8"
                         Background="{DynamicResource SystemErrorTextColorBrush}"
                         CornerRadius="4"
-                        IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                        Opacity="0.1">
+                        IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                         <TextBlock
                             Foreground="{DynamicResource SystemErrorTextColorBrush}"
                             Text="{Binding ErrorMessage}"
@@ -77,12 +76,8 @@
                         Padding="12,8"
                         Background="{DynamicResource SystemControlHighlightAccentBrush}"
                         CornerRadius="4"
-                        IsVisible="{Binding SuccessMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                        Opacity="0.1">
-                        <TextBlock
-                            Foreground="{DynamicResource SystemControlHighlightAccentBrush}"
-                            Text="{Binding SuccessMessage}"
-                            TextWrapping="Wrap" />
+                        IsVisible="{Binding SuccessMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <TextBlock Text="{Binding SuccessMessage}" TextWrapping="Wrap" />
                     </Border>
 
                     <!--  搜索状态  -->
