@@ -119,12 +119,31 @@ public class GetPendingFriendRequestsResponse
 
 public class FriendRequest
 {
+    [Key]
+    public int RequestId { get; set; }
+
     [JsonPropertyName("fromUserId")]
+    [Required, StringLength(8)]
     public string FromUserId { get; set; } = string.Empty;
+
+    [JsonPropertyName("toUserId")]
+    [Required, StringLength(8)]
+    public string ToUserId { get; set; } = string.Empty;
+
     [JsonPropertyName("fromUserName")]
     public string FromUserName { get; set; } = string.Empty;
+
     [JsonPropertyName("message")]
     public string Message { get; set; } = string.Empty;
+
     [JsonPropertyName("createdAt")]
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow; [JsonPropertyName("status")]
+    public FriendRequestStatus Status { get; set; } = FriendRequestStatus.Pending;
+}
+
+public enum FriendRequestStatus
+{
+    Pending = 0,   // 待处理
+    Accepted = 1,  // 已接受
+    Rejected = 2   // 已拒绝
 }

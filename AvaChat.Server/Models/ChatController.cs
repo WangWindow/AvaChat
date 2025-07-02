@@ -1,16 +1,19 @@
+using AvaChat.Server.Hubs;
 using AvaChat.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace AvaChat.Server.Models;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ChatController(ServerDbContext db) : ControllerBase
+public class ChatController(ServerDbContext db, IHubContext<ChatHub> hubContext) : ControllerBase
 {
     private readonly ServerDbContext _db = db;
+    private readonly IHubContext<ChatHub> _hubContext = hubContext;
 
-    // 发送消息（用户间直接通信）
+    // 发送消息（用户间直接通信 - 已通过SignalR实现，此API仅作为备选）
     [HttpPost("send")]
     public async Task<ActionResult<SendMessageResponse>> Send([FromBody] SendMessageRequest req)
     {
@@ -38,8 +41,17 @@ public class ChatController(ServerDbContext db) : ControllerBase
             MessageType = MessageType.Text,
             Status = MessageStatus.Delivered
         };
+
+        // 保存消息到数据库
         _db.Messages.Add(msg);
         await _db.SaveChangesAsync();
+
+        // 更新消息ID
+        msg.MessageId = _db.Messages
+            .OrderByDescending(m => m.MessageId)
+            .First(m => m.SenderId == req.FromUserId && m.ReceiverId == req.ToUserId && m.Content == req.Content)
+            .MessageId;
+
         return Ok(new SendMessageResponse { Success = true });
     }
 

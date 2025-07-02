@@ -42,3 +42,4 @@ public enum MessageType
     File = 2,  // 文件消息
     System = 3, // 系统消息
 }
+

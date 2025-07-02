@@ -1,4 +1,8 @@
 ﻿using System.ComponentModel;
+using AvaChat.Client.Models;
+using AvaChat.Shared.Models;
+using Avalonia.Threading;
+using CommunityToolkit.Mvvm.Messaging;
 
 namespace AvaChat.Client.ViewModels;
 
@@ -64,6 +68,60 @@ public partial class MainWindowViewModel : ViewModelBase
             {
                 ChatViewModel.LoadChatWithFriend(FriendListViewModel.SelectedFriend);
             }
+        };
+
+        // 监听SignalR客户端事件
+        SetupSignalRHandlers();
+
+        // 订阅SignalR客户端变化事件
+        WeakReferenceMessenger.Default.Register<SignalRClient>(this, (r, client) =>
+        {
+            SetupSignalRHandlers(client);
+        });
+    }
+
+    /// <summary>
+    /// 设置SignalR消息处理器
+    /// </summary>
+    private void SetupSignalRHandlers()
+    {
+        // 获取当前SignalR客户端
+        var signalRClient = App.SignalRClient;
+        if (signalRClient != null)
+        {
+            SetupSignalRHandlers(signalRClient);
+        }
+    }
+
+    /// <summary>
+    /// 设置指定SignalR客户端的消息处理器
+    /// </summary>
+    private void SetupSignalRHandlers(SignalRClient signalRClient)
+    {
+        // 处理系统消息
+        signalRClient.OnSystemMessageReceived += (sender, message) =>
+        {
+            Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                // 显示系统消息通知
+                HasNewNotifications = true;
+
+                // 如果当前显示的是系统消息对话，则刷新消息列表
+                if (NotificationViewModel != null)
+                {
+                    await NotificationViewModel.RefreshSystemMessagesAsync();
+                }
+            });
+        };
+
+        // 好友状态变更
+        signalRClient.OnFriendStatusChanged += (sender, info) =>
+        {
+            Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                // 刷新好友列表中的好友状态
+                await FriendListViewModel.RefreshFriendStatusAsync(info.UserId, info.Status);
+            });
         };
 
         // 监听通知更新 - 使用可取消的后台任务

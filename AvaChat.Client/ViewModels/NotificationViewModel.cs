@@ -8,7 +8,7 @@ public partial class NotificationViewModel : ViewModelBase
     private ObservableCollection<FriendRequest> _pendingFriendRequests = [];
 
     [ObservableProperty]
-    private ObservableCollection<SystemMessage> _systemMessages = [];
+    private ObservableCollection<Message> _systemMessages = [];
 
     [ObservableProperty]
     private DateTime _lastUpdateTime = DateTime.Now;
@@ -52,10 +52,14 @@ public partial class NotificationViewModel : ViewModelBase
                 PendingFriendRequests.Remove(request);
 
                 // 添加系统消息
-                SystemMessages.Insert(0, new SystemMessage
+                SystemMessages.Insert(0, new Message
                 {
+                    SenderId = "system",
+                    ReceiverId = currentUserId,
                     Content = $"已接受 {request.FromUserName} 的好友申请",
-                    Timestamp = DateTime.Now
+                    Timestamp = DateTime.Now,
+                    MessageType = MessageType.System,
+                    Status = MessageStatus.Delivered
                 });
 
                 // 通知主窗口刷新好友列表
@@ -71,20 +75,28 @@ public partial class NotificationViewModel : ViewModelBase
             else
             {
                 // 添加错误消息
-                SystemMessages.Insert(0, new SystemMessage
+                SystemMessages.Insert(0, new Message
                 {
+                    SenderId = "system",
+                    ReceiverId = currentUserId,
                     Content = $"处理好友申请失败: {result?.Error}",
-                    Timestamp = DateTime.Now
+                    Timestamp = DateTime.Now,
+                    MessageType = MessageType.System,
+                    Status = MessageStatus.Delivered
                 });
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[AcceptFriendRequestAsync] Exception: {ex.Message}");
-            SystemMessages.Insert(0, new SystemMessage
+            SystemMessages.Insert(0, new Message
             {
+                SenderId = "system",
+                ReceiverId = App.CurrentUserId ?? "unknown",
                 Content = $"处理好友申请时发生错误: {ex.Message}",
-                Timestamp = DateTime.Now
+                Timestamp = DateTime.Now,
+                MessageType = MessageType.System,
+                Status = MessageStatus.Delivered
             });
         }
         finally
@@ -117,29 +129,41 @@ public partial class NotificationViewModel : ViewModelBase
                 PendingFriendRequests.Remove(request);
 
                 // 添加系统消息
-                SystemMessages.Insert(0, new SystemMessage
+                SystemMessages.Insert(0, new Message
                 {
+                    SenderId = "system",
+                    ReceiverId = currentUserId,
                     Content = $"已拒绝 {request.FromUserName} 的好友申请",
-                    Timestamp = DateTime.Now
+                    Timestamp = DateTime.Now,
+                    MessageType = MessageType.System,
+                    Status = MessageStatus.Delivered
                 });
             }
             else
             {
                 // 添加错误消息
-                SystemMessages.Insert(0, new SystemMessage
+                SystemMessages.Insert(0, new Message
                 {
+                    SenderId = "system",
+                    ReceiverId = currentUserId,
                     Content = $"处理好友申请失败: {result?.Error}",
-                    Timestamp = DateTime.Now
+                    Timestamp = DateTime.Now,
+                    MessageType = MessageType.System,
+                    Status = MessageStatus.Delivered
                 });
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[RejectFriendRequestAsync] Exception: {ex.Message}");
-            SystemMessages.Insert(0, new SystemMessage
+            SystemMessages.Insert(0, new Message
             {
+                SenderId = "system",
+                ReceiverId = App.CurrentUserId ?? "unknown",
                 Content = $"处理好友申请时发生错误: {ex.Message}",
-                Timestamp = DateTime.Now
+                Timestamp = DateTime.Now,
+                MessageType = MessageType.System,
+                Status = MessageStatus.Delivered
             });
         }
         finally
@@ -179,7 +203,7 @@ public partial class NotificationViewModel : ViewModelBase
                 }
             }
 
-            // TODO: 加载系统消息（从本地数据库或服务器）
+            // 加载系统消息
             await LoadSystemMessagesAsync();
         }
         catch (Exception ex)
@@ -201,9 +225,10 @@ public partial class NotificationViewModel : ViewModelBase
             var factory = new ClientDbContextFactory();
             using var db = factory.CreateDbContext([]);
 
-            var systemUserId = "00000000"; // System用户的固定ID
+            // 查询系统消息
             var messages = await Task.Run(() => db.Messages
-                .Where(m => m.SenderId == systemUserId || m.ReceiverId == systemUserId)
+                .Where(m => m.SenderId == "system" ||
+                           m.MessageType == MessageType.System)
                 .OrderByDescending(m => m.Timestamp)
                 .Take(50)
                 .ToList());
@@ -211,11 +236,7 @@ public partial class NotificationViewModel : ViewModelBase
             SystemMessages.Clear();
             foreach (var message in messages)
             {
-                SystemMessages.Add(new SystemMessage
-                {
-                    Content = message.Content,
-                    Timestamp = message.Timestamp
-                });
+                SystemMessages.Add(message);
             }
         }
         catch (Exception ex)
@@ -229,25 +250,46 @@ public partial class NotificationViewModel : ViewModelBase
     /// </summary>
     public void AddSystemMessage(string content)
     {
-        SystemMessages.Insert(0, new SystemMessage
+        var message = new Message
         {
+            SenderId = "system",
+            ReceiverId = App.CurrentUserId ?? "unknown",
             Content = content,
-            Timestamp = DateTime.Now
-        });
+            Timestamp = DateTime.Now,
+            MessageType = MessageType.System,
+            Status = MessageStatus.Delivered
+        };
+
+        SystemMessages.Insert(0, message);
         LastUpdateTime = DateTime.Now;
+
+        // 保存到本地数据库
+        Task.Run(() =>
+        {
+            try
+            {
+                var factory = new ClientDbContextFactory();
+                using var db = factory.CreateDbContext([]);
+                db.Messages.Add(message);
+                db.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[AddSystemMessage] 保存消息失败: {ex.Message}");
+            }
+        });
     }
 
     /// <summary>
     /// 检查是否有新通知
     /// </summary>
     public bool HasNewNotifications => PendingFriendRequests.Count > 0;
-}
 
-/// <summary>
-/// 系统消息模型
-/// </summary>
-public class SystemMessage
-{
-    public string Content { get; set; } = string.Empty;
-    public DateTime Timestamp { get; set; }
+    /// <summary>
+    /// 刷新系统消息
+    /// </summary>
+    public async Task RefreshSystemMessagesAsync()
+    {
+        await LoadSystemMessagesAsync();
+    }
 }

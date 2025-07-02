@@ -1,4 +1,6 @@
+using AvaChat.Client.Models;
 using Avalonia.LogicalTree;
+using CommunityToolkit.Mvvm.Messaging;
 namespace AvaChat.Client;
 
 public partial class App : Application
@@ -6,16 +8,45 @@ public partial class App : Application
     public static TrayIcon? MainTrayIcon;
     public static string? CurrentUserId { get; set; }
     public static string? CurrentServerAddress { get; set; }
+    public static string? CurrentUserName { get; set; }
 
-    public static void OnUserLogin(string userId, string serverAddress)
+    // SignalR客户端实例
+    public static SignalRClient? SignalRClient { get; private set; }
+
+    public static async void OnUserLogin(string userId, string serverAddress)
     {
         CurrentUserId = userId;
         CurrentServerAddress = serverAddress;
         UpdateTrayMenu();
+
+        // 创建并连接SignalR客户端
+        try
+        {
+            SignalRClient?.Dispose();
+            SignalRClient = new SignalRClient(serverAddress, userId);
+            await SignalRClient.ConnectAsync();
+
+            // 通知其他组件SignalR客户端已创建
+            WeakReferenceMessenger.Default.Send(SignalRClient);
+
+            Console.WriteLine("[App] SignalR连接成功");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[App] SignalR连接失败: {ex.Message}");
+        }
     }
 
-    public static void OnUserLogout()
+    public static async Task OnUserLogout()
     {
+        // 断开SignalR连接
+        if (SignalRClient != null)
+        {
+            await SignalRClient.DisconnectAsync();
+            SignalRClient.Dispose();
+            SignalRClient = null;
+        }
+
         CurrentUserId = null;
         UpdateTrayMenu();
     }
@@ -190,7 +221,7 @@ public partial class App : Application
             }
             catch { /* 忽略异常 */ }
         }
-        OnUserLogout();
+        await OnUserLogout();
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.Shutdown();

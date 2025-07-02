@@ -13,8 +13,6 @@ public class Friendship
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public string AlterName { get; set; } = string.Empty;
-
     [Required]
     public UserInfo FriendUser { get; set; } = new UserInfo();
 }

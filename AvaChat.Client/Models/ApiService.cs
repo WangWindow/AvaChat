@@ -155,21 +155,20 @@ public class ApiService(string baseUrl)
             var dtos = JsonSerializer.Deserialize<List<Friendship>>(content);
             if (dtos == null) return null;
             var friendships = dtos
-                .Where(d => d.FriendshipId != 0 || d.FriendUserId == "00000000")
+                .Where(d => d.FriendshipId != 0 || d.FriendUserId == "system")
                 .Select(d => new Friendship
                 {
                     FriendshipId = d.FriendshipId,
                     UserId = d.UserId,
                     FriendUserId = d.FriendUserId,
                     CreatedAt = d.CreatedAt,
-                    AlterName = d.AlterName,
                 }).ToList();
             using (var db = factory.CreateDbContext([]))
             {
                 foreach (var f in friendships)
                 {
                     // 仅当FriendshipId为0且FriendUserId不是System时跳过
-                    if (f.FriendshipId == 0 && f.FriendUserId != "00000000")
+                    if (f.FriendshipId == 0 && f.FriendUserId != "system")
                     {
                         Console.WriteLine($"[GetFriendshipsAsync] Skip friendship with FriendshipId=0, UserId={f.UserId}, FriendUserId={f.FriendUserId}");
                         continue;
@@ -180,7 +179,6 @@ public class ApiService(string baseUrl)
                         exist.UserId = f.UserId;
                         exist.FriendUserId = f.FriendUserId;
                         exist.CreatedAt = f.CreatedAt;
-                        exist.AlterName = f.AlterName;
                         Console.WriteLine($"[GetFriendshipsAsync] Update local friendship: {f.FriendshipId}, FriendUserId: {f.FriendUserId}");
                     }
                     else
@@ -215,15 +213,29 @@ public class ApiService(string baseUrl)
 
         try
         {
+            Console.WriteLine($"[SendFriendRequestAsync] 发送请求: {url}, content={json}");
             var resp = await _httpClient.PostAsync(url, content);
-            if (!resp.IsSuccessStatusCode) return null;
+
             var responseContent = await resp.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<AddFriendResponse>(responseContent);
+            Console.WriteLine($"[SendFriendRequestAsync] 响应状态: {resp.StatusCode}, 内容: {responseContent}");
+
+            if (!resp.IsSuccessStatusCode)
+                return new AddFriendResponse { Success = false, Error = $"HTTP错误: {resp.StatusCode}" };
+
+            try
+            {
+                return JsonSerializer.Deserialize<AddFriendResponse>(responseContent);
+            }
+            catch (Exception jsonEx)
+            {
+                Console.WriteLine($"[SendFriendRequestAsync] JSON解析错误: {jsonEx.Message}");
+                return new AddFriendResponse { Success = false, Error = $"响应解析失败: {jsonEx.Message}" };
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[SendFriendRequestAsync] Exception: {ex.Message}");
-            return null;
+            Console.WriteLine($"[SendFriendRequestAsync] 异常: {ex.Message}");
+            return new AddFriendResponse { Success = false, Error = ex.Message };
         }
     }
 
@@ -510,8 +522,7 @@ public class ApiService(string baseUrl)
                             FriendshipId = friendship.FriendshipId,
                             UserId = friendship.UserId,
                             FriendUserId = friendship.FriendUserId,
-                            CreatedAt = friendship.CreatedAt,
-                            AlterName = friendship.AlterName ?? string.Empty
+                            CreatedAt = friendship.CreatedAt
                         });
                     }
                 }

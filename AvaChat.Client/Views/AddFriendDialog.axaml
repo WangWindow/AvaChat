@@ -10,6 +10,7 @@
     Height="600"
     x:DataType="vm:AddFriendDialogViewModel"
     CanResize="False"
+    Icon="/Assets/avalonia-logo.ico"
     ShowInTaskbar="False"
     WindowStartupLocation="CenterOwner"
     mc:Ignorable="d">
@@ -56,6 +57,34 @@
         <Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
             <ScrollViewer Padding="20">
                 <StackPanel Spacing="8">
+                    <!--  错误消息  -->
+                    <Border
+                        Margin="0,0,0,8"
+                        Padding="12,8"
+                        Background="{DynamicResource SystemErrorTextColorBrush}"
+                        CornerRadius="4"
+                        IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                        Opacity="0.1">
+                        <TextBlock
+                            Foreground="{DynamicResource SystemErrorTextColorBrush}"
+                            Text="{Binding ErrorMessage}"
+                            TextWrapping="Wrap" />
+                    </Border>
+
+                    <!--  成功消息  -->
+                    <Border
+                        Margin="0,0,0,8"
+                        Padding="12,8"
+                        Background="{DynamicResource SystemControlHighlightAccentBrush}"
+                        CornerRadius="4"
+                        IsVisible="{Binding SuccessMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                        Opacity="0.1">
+                        <TextBlock
+                            Foreground="{DynamicResource SystemControlHighlightAccentBrush}"
+                            Text="{Binding SuccessMessage}"
+                            TextWrapping="Wrap" />
+                    </Border>
+
                     <!--  搜索状态  -->
                     <TextBlock
                         HorizontalAlignment="Center"
@@ -74,6 +103,8 @@
                             <MultiBinding Converter="{x:Static BoolConverters.And}">
                                 <Binding Path="!IsSearching" />
                                 <Binding Converter="{StaticResource ZeroToBoolConverter}" Path="SearchResults.Count" />
+                                <Binding Converter="{x:Static StringConverters.IsNullOrEmpty}" Path="ErrorMessage" />
+                                <Binding Converter="{x:Static StringConverters.IsNullOrEmpty}" Path="SuccessMessage" />
                             </MultiBinding>
                         </TextBlock.IsVisible>
                     </TextBlock>

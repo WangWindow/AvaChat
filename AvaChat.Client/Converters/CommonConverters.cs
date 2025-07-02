@@ -209,24 +209,6 @@ public class ZeroToBoolConverter : IValueConverter
 }
 
 /// <summary>
-/// 显示名称转换器（优先显示备注名）
-/// </summary>
-public class DisplayNameConverter : IValueConverter
-{
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        var alterName = value as string;
-        var userName = parameter as string;
-
-        return !string.IsNullOrEmpty(alterName) ? alterName : userName ?? "未知用户";
-    }
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
-}
-
-/// <summary>
 /// 日期时间转换器
 /// </summary>
 public class DateTimeConverter : IValueConverter

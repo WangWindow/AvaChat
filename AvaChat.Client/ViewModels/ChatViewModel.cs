@@ -1,6 +1,8 @@
 namespace AvaChat.Client.ViewModels;
 
 using AvaChat.Shared.Models;
+using Avalonia.Threading;
+using CommunityToolkit.Mvvm.Messaging;
 
 public partial class ChatViewModel : ViewModelBase
 {
@@ -24,6 +26,76 @@ public partial class ChatViewModel : ViewModelBase
 
     public ChatViewModel()
     {
+        // 设置SignalR消息处理
+        SetupSignalRHandlers();
+    }
+
+    /// <summary>
+    /// 设置SignalR消息处理器
+    /// </summary>
+    private void SetupSignalRHandlers()
+    {
+        // 应用启动后，如果SignalRClient已创建，就注册处理器
+        RegisterSignalRHandlers(App.SignalRClient);
+
+        // 订阅SignalR客户端变化事件
+        WeakReferenceMessenger.Default.Register<SignalRClient>(this, (r, client) =>
+        {
+            RegisterSignalRHandlers(client);
+        });
+    }
+
+    /// <summary>
+    /// 注册SignalR消息处理器
+    /// </summary>
+    private void RegisterSignalRHandlers(SignalRClient? signalRClient)
+    {
+        if (signalRClient == null) return;
+
+        // 接收消息处理器
+        signalRClient.OnMessageReceived += (sender, message) =>
+        {
+            // 如果是当前聊天的消息，就添加到消息列表
+            if (CurrentFriend != null &&
+                (message.SenderId == CurrentFriend.FriendUserId || message.ReceiverId == CurrentFriend.FriendUserId))
+            {
+                // 需要在UI线程上操作集合
+                Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    Messages.Add(message);
+                });
+            }
+        };
+
+        // 消息发送成功回调
+        signalRClient.OnMessageSent += (sender, message) =>
+        {
+            // 需要在UI线程上操作集合
+            Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                Messages.Add(message);
+            });
+        };
+
+        // 接收错误信息
+        signalRClient.OnErrorReceived += (sender, error) =>
+        {
+            Console.WriteLine($"[SignalR错误] {error}");
+        };
+
+        // 好友状态变更
+        signalRClient.OnFriendStatusChanged += (sender, info) =>
+        {
+            if (CurrentFriend != null && CurrentFriend.FriendUserId == info.UserId)
+            {
+                // 更新当前聊天好友状态
+                Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    CurrentFriend.FriendUser.Status = info.Status;
+                    UpdateStatusText();
+                });
+            }
+        };
     }
 
     partial void OnCurrentFriendChanged(Friendship? value)
@@ -44,44 +116,30 @@ public partial class ChatViewModel : ViewModelBase
         {
             IsSending = true;
             var currentUserId = App.CurrentUserId;
-            var serverAddress = App.CurrentServerAddress;
+            var signalRClient = App.SignalRClient;
 
-            if (string.IsNullOrEmpty(currentUserId) || string.IsNullOrEmpty(serverAddress))
+            if (string.IsNullOrEmpty(currentUserId) || signalRClient == null || !signalRClient.IsConnected)
+            {
+                Console.WriteLine("无法发送消息：SignalR未连接或用户未登录");
                 return;
-
-            var api = new ApiService(serverAddress);
-            var result = await api.SendMessageAsync(currentUserId, CurrentFriend.FriendUserId, MessageText);
-
-            if (result?.Success == true)
-            {
-                // 创建本地消息记录
-                var message = new Message
-                {
-                    SenderId = currentUserId,
-                    ReceiverId = CurrentFriend.FriendUserId,
-                    Content = MessageText,
-                    Timestamp = DateTime.Now,
-                    MessageType = MessageType.Text,
-                    Status = MessageStatus.Delivered
-                };
-
-                Messages.Add(message);
-                MessageText = string.Empty;
-
-                // 保存到本地数据库
-                var factory = new ClientDbContextFactory();
-                using var db = factory.CreateDbContext([]);
-                db.Messages.Add(message);
-                await db.SaveChangesAsync();
             }
-            else
+
+            // 暂存消息文本，因为发送后会清空输入框
+            var messageText = MessageText;
+            MessageText = string.Empty;
+
+            // 通过SignalR发送消息
+            bool success = await signalRClient.SendPrivateMessageAsync(CurrentFriend.FriendUserId, messageText);
+
+            if (!success)
             {
-                Console.WriteLine($"发送消息失败: {result?.Error}");
+                Console.WriteLine("通过SignalR发送消息失败");
+                MessageText = messageText; // 恢复消息文本
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[SendMessageAsync] Exception: {ex.Message}");
+            Console.WriteLine($"[SendMessageAsync] 异常: {ex.Message}");
         }
         finally
         {

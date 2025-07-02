@@ -42,7 +42,6 @@ public class SyncController(ServerDbContext db) : ControllerBase
             UserId = f.UserId,
             FriendUserId = f.FriendUserId,
             CreatedAt = f.CreatedAt,
-            AlterName = f.AlterName,
             FriendUser = new UserInfo
             {
                 UserId = f.FriendUser.UserId,
@@ -62,6 +61,8 @@ public class SyncController(ServerDbContext db) : ControllerBase
 
         try
         {
+            Console.WriteLine($"[BatchSync] 开始同步, UserId={req.UserId}, LastSyncTime={req.LastSyncTime}");
+
             // 1. 同步用户基本信息
             var user = await _db.Users.FirstOrDefaultAsync(u => u.UserId == req.UserId);
             if (user != null)
@@ -73,13 +74,20 @@ public class SyncController(ServerDbContext db) : ControllerBase
                     Status = user.Status,
                     LastLoginTime = user.LastLoginTime
                 };
+                Console.WriteLine($"[BatchSync] 用户信息同步成功: {user.UserName}");
+            }
+            else
+            {
+                Console.WriteLine($"[BatchSync] 未找到用户信息: {req.UserId}");
             }
 
             // 2. 同步好友关系列表
+            Console.WriteLine($"[BatchSync] 开始同步好友关系");
             var friends = await _db.Friendships
                 .Include(f => f.FriendUser)
                 .Where(f => f.UserId == req.UserId)
                 .ToListAsync();
+            Console.WriteLine($"[BatchSync] 找到 {friends.Count} 个好友关系");
 
             response.Friendships = friends.Select(f => new Friendship
             {
@@ -87,7 +95,6 @@ public class SyncController(ServerDbContext db) : ControllerBase
                 UserId = f.UserId,
                 FriendUserId = f.FriendUserId,
                 CreatedAt = f.CreatedAt,
-                AlterName = f.AlterName,
                 FriendUser = new UserInfo
                 {
                     UserId = f.FriendUser.UserId,
@@ -124,18 +131,11 @@ public class SyncController(ServerDbContext db) : ControllerBase
 
             // 4. 同步好友申请
             var pendingRequests = await _db.FriendRequests
-                .Include(r => r.FromUser)
                 .Where(r => r.ToUserId == req.UserId && r.Status == FriendRequestStatus.Pending)
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
 
-            response.PendingFriendRequests = pendingRequests.Select(r => new FriendRequest
-            {
-                FromUserId = r.FromUserId,
-                FromUserName = r.FromUser.UserName,
-                Message = r.Message,
-                CreatedAt = r.CreatedAt
-            }).ToList();
+            response.PendingFriendRequests = pendingRequests.ToList();
 
             response.LastSyncTime = DateTime.UtcNow;
         }

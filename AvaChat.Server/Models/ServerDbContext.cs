@@ -5,7 +5,7 @@ public class ServerDbContext(DbContextOptions<ServerDbContext> options) : DbCont
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Friendship> Friendships { get; set; } = null!;
     public DbSet<Message> Messages { get; set; } = null!;
-    public DbSet<FriendRequestEntity> FriendRequests { get; set; } = null!;
+    public DbSet<FriendRequest> FriendRequests { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -33,5 +33,10 @@ public class ServerDbContext(DbContextOptions<ServerDbContext> options) : DbCont
             .Entity<Friendship>()
             .HasIndex(f => new { f.UserId, f.FriendUserId })
             .IsUnique();
+
+        modelBuilder.Entity<FriendRequest>()
+            .HasIndex(f => new { f.FromUserId, f.ToUserId })
+            .IsUnique()
+            .HasFilter("Status = 0");
     }
 }

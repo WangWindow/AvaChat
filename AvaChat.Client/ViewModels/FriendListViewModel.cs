@@ -163,7 +163,6 @@ public partial class FriendListViewModel : ViewModelBase
             var filtered = Friends.Where(f =>
                 (f.FriendUser.UserName?.ToLowerInvariant().Contains(lower, StringComparison.InvariantCultureIgnoreCase) ?? false)
                 || (f.FriendUserId?.Contains(lower) ?? false)
-                || (f.AlterName?.ToLowerInvariant().Contains(lower, StringComparison.InvariantCultureIgnoreCase) ?? false)
             ).ToList();
             FilteredFriends = new ObservableCollection<Friendship>(filtered);
         }
@@ -179,6 +178,34 @@ public partial class FriendListViewModel : ViewModelBase
         {
             friend.FriendUser.Status = status;
             FilterFriends();
+        }
+    }
+
+    /// <summary>
+    /// 刷新指定好友状态
+    /// </summary>
+    public async Task RefreshFriendStatusAsync(string userId, UserStatus status)
+    {
+        // 查找好友
+        var friend = Friends.FirstOrDefault(f => f.FriendUserId == userId);
+        if (friend != null)
+        {
+            // 更新状态
+            friend.FriendUser.Status = status;
+
+            // 如果是上线状态，更新最后登录时间
+            if (status == UserStatus.Online)
+            {
+                friend.FriendUser.LastLoginTime = DateTime.Now;
+            }
+
+            // 刷新过滤列表
+            FilterFriends();
+        }
+        else
+        {
+            // 如果找不到好友（可能是新添加的），刷新整个列表
+            await LoadFriendsAsync();
         }
     }
 
