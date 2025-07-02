@@ -1,6 +1,6 @@
-
 using System.Threading.Tasks;
 using AvaChat.Server.Hubs;
+using AvaChat.Shared.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -47,6 +47,9 @@ public partial class App : Application
         // 存储服务提供者，以便在应用程序其他地方访问
         Program.SetServiceProvider(app.Services);
 
+        // 初始化数据库并将所有用户状态设为离线
+        InitializeDatabaseAsync(app.Services).Wait();
+
         // 配置SignalR Hub路由
         app.MapHub<ChatHub>("/chatHub");
 
@@ -65,6 +68,45 @@ public partial class App : Application
         foreach (var plugin in dataValidationPluginsToRemove)
         {
             BindingPlugins.DataValidators.Remove(plugin);
+        }
+    }
+
+    /// <summary>
+    /// 初始化数据库，将所有用户状态设为离线
+    /// </summary>
+    private static async Task InitializeDatabaseAsync(IServiceProvider serviceProvider)
+    {
+        try
+        {
+            using var scope = serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ServerDbContext>();
+
+            // 确保数据库已创建
+            await dbContext.Database.EnsureCreatedAsync();
+
+            // 将所有用户状态设为离线
+            var onlineUsers = await dbContext.Users
+                .Where(u => u.Status == UserStatus.Online)
+                .ToListAsync();
+
+            if (onlineUsers.Count > 0)
+            {
+                foreach (var user in onlineUsers)
+                {
+                    user.Status = UserStatus.Offline;
+                }
+
+                await dbContext.SaveChangesAsync();
+                Console.WriteLine($"[服务器启动] 已将 {onlineUsers.Count} 个在线用户状态设为离线");
+            }
+            else
+            {
+                Console.WriteLine("[服务器启动] 没有在线用户需要设为离线状态");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[服务器启动错误] 初始化数据库失败: {ex.Message}");
         }
     }
 }

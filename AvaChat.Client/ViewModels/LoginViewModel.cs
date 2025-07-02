@@ -130,7 +130,7 @@ public partial class LoginViewModel : ViewModelBase
                 }
 
                 // 设置全局登录状态，刷新托盘菜单
-                App.OnUserLogin(UserId, ServerAddress);
+                App.OnUserLogin(UserId, ServerAddress, resp.UserName);
 
                 // 打开主窗口
                 var mainWindow = new MainWindow
@@ -262,6 +262,13 @@ public partial class LoginViewModel : ViewModelBase
                 ServerAddress = serverSetting.Value;
             }
 
+            // 加载"记住密码"勾选框状态
+            var rememberSetting = db.ClientSettings.FirstOrDefault(s => s.Key == "RememberCredentials");
+            if (rememberSetting != null && bool.TryParse(rememberSetting.Value, out bool rememberValue))
+            {
+                RememberCredentials = rememberValue;
+            }
+
             // 获取所有已保存账号信息，按最后登录时间降序排列
             var loginInfos = db.LoginInfos
                 .OrderByDescending(x => x.LoginTime)
@@ -289,6 +296,23 @@ public partial class LoginViewModel : ViewModelBase
         {
             var factory = new ClientDbContextFactory();
             using var db = factory.CreateDbContext([]);
+
+            // 保存"记住密码"勾选框状态
+            var rememberSetting = db.ClientSettings.FirstOrDefault(s => s.Key == "RememberCredentials");
+            if (rememberSetting != null)
+            {
+                rememberSetting.Value = RememberCredentials.ToString();
+                db.ClientSettings.Update(rememberSetting);
+            }
+            else
+            {
+                db.ClientSettings.Add(new ClientSetting
+                {
+                    Key = "RememberCredentials",
+                    Value = RememberCredentials.ToString()
+                });
+            }
+
             // 先删除已有相同UserId的记录
             var old = db.LoginInfos.Where(x => x.UserId == UserId).ToList();
             if (old.Count > 0)

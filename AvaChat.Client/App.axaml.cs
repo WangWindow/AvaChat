@@ -13,11 +13,12 @@ public partial class App : Application
     // SignalR客户端实例
     public static SignalRClient? SignalRClient { get; private set; }
 
-    public static async void OnUserLogin(string userId, string serverAddress)
+    public static async void OnUserLogin(string userId, string serverAddress, string? userName = null)
     {
         CurrentUserId = userId;
         CurrentServerAddress = serverAddress;
-        UpdateTrayMenu();
+        CurrentUserName = userName;
+        UpdateTrayIcon();
 
         // 创建并连接SignalR客户端
         try
@@ -48,6 +49,28 @@ public partial class App : Application
         }
 
         CurrentUserId = null;
+        CurrentUserName = null;
+        UpdateTrayIcon();
+    }
+
+    public static void UpdateTrayIcon()
+    {
+        if (MainTrayIcon != null)
+        {
+            // 更新托盘图标的提示文本
+            if (!string.IsNullOrEmpty(CurrentUserId))
+            {
+                var displayText = !string.IsNullOrEmpty(CurrentUserName)
+                    ? $"AvaChat - {CurrentUserName} ({CurrentUserId})"
+                    : $"AvaChat - {CurrentUserId}";
+                MainTrayIcon.ToolTipText = displayText;
+            }
+            else
+            {
+                MainTrayIcon.ToolTipText = "AvaChat - 未登录";
+            }
+        }
+
         UpdateTrayMenu();
     }
 

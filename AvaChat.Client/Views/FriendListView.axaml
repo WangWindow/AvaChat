@@ -97,7 +97,10 @@
         <Border Grid.Row="2" Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
             <Grid>
                 <!--  好友列表  -->
-                <ScrollViewer IsVisible="{Binding !IsLoading}">
+                <ScrollViewer
+                    HorizontalScrollBarVisibility="Disabled"
+                    IsVisible="{Binding !IsLoading}"
+                    VerticalScrollBarVisibility="Auto">
                     <ItemsControl ItemsSource="{Binding FilteredFriends}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>

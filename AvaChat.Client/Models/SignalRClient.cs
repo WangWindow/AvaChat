@@ -114,6 +114,12 @@ public class SignalRClient : IDisposable
         {
             OnMessageReceived?.Invoke(this, message);
 
+            // 显示通知（仅当消息不是自己发送的）
+            if (message.SenderId != _userId)
+            {
+                NotificationManager.ShowMessageNotification(false, message.SenderId, message.Content);
+            }
+
             // 本地保存消息
             SaveMessageToLocalDb(message);
         });
@@ -122,6 +128,9 @@ public class SignalRClient : IDisposable
         _hubConnection.On<Message>("ReceiveSystemMessage", (message) =>
         {
             OnSystemMessageReceived?.Invoke(this, message);
+
+            // 显示系统消息通知
+            NotificationManager.ShowMessageNotification(true, "系统", message.Content);
 
             // 本地保存系统消息
             SaveMessageToLocalDb(message);

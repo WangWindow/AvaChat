@@ -4,7 +4,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:shared="using:AvaChat.Shared.Models"
     xmlns:vm="using:AvaChat.Server.ViewModels"
+    x:Name="MainWindowRoot"
     Title="AvaChat 服务器"
     MinWidth="600"
     MinHeight="500"
@@ -84,7 +86,7 @@
             </Border>
 
             <!--  主内容区  -->
-            <Grid Grid.Row="1" ColumnDefinitions="250,*">
+            <Grid Grid.Row="1" ColumnDefinitions="300,*">
 
                 <!--  左侧面板  -->
                 <Border
@@ -93,43 +95,288 @@
                     Padding="15"
                     Classes="Card">
 
-                    <Grid RowDefinitions="Auto,*,Auto">
-                        <TextBlock
-                            Grid.Row="0"
-                            Classes="Header"
-                            Text="在线用户" />
+                    <Grid RowDefinitions="Auto,Auto,*,Auto">
+                        <!--  标签页切换  -->
+                        <StackPanel Grid.Row="0" Spacing="8">
+                            <TextBlock Classes="Header" Text="监控面板" />
 
-                        <ListBox
+                            <!--  标签页按钮  -->
+                            <StackPanel Spacing="4">
+                                <Button
+                                    Padding="8,6"
+                                    HorizontalAlignment="Stretch"
+                                    Classes="Primary"
+                                    Command="{Binding SwitchTabCommand}"
+                                    CommandParameter="在线用户"
+                                    Content="在线用户" />
+                                <Button
+                                    Padding="8,6"
+                                    HorizontalAlignment="Stretch"
+                                    Classes="Primary"
+                                    Command="{Binding SwitchTabCommand}"
+                                    CommandParameter="所有用户"
+                                    Content="所有用户" />
+                                <Button
+                                    Padding="8,6"
+                                    HorizontalAlignment="Stretch"
+                                    Classes="Primary"
+                                    Command="{Binding SwitchTabCommand}"
+                                    CommandParameter="消息历史"
+                                    Content="消息历史" />
+                                <Button
+                                    Padding="8,6"
+                                    HorizontalAlignment="Stretch"
+                                    Classes="Primary"
+                                    Command="{Binding SwitchTabCommand}"
+                                    CommandParameter="好友关系"
+                                    Content="好友关系" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!--  搜索框  -->
+                        <Border
                             Grid.Row="1"
-                            ItemsSource="{Binding OnlineUsers}"
-                            SelectedItem="{Binding SelectedUser}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid ColumnDefinitions="Auto,*" ToolTip.Tip="{Binding}">
-                                        <Ellipse
-                                            Width="8"
-                                            Height="8"
-                                            Margin="0,0,8,0"
-                                            VerticalAlignment="Center"
-                                            Fill="{DynamicResource SystemControlHighlightAccentBrush}" />
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            VerticalAlignment="Center"
-                                            Text="{Binding}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
+                            Margin="0,15,0,0"
+                            Padding="10,8"
+                            Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                            CornerRadius="4">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBox
+                                    Grid.Column="0"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Text="{Binding SearchText}"
+                                    Watermark="搜索..." />
+                                <Button
+                                    Grid.Column="1"
+                                    Padding="6"
+                                    Background="Transparent"
+                                    Command="{Binding SearchCommand}">
+                                    <PathIcon
+                                        Width="12"
+                                        Height="12"
+                                        Data="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+                                </Button>
+                            </Grid>
+                        </Border>
 
-                        <StackPanel
+                        <!--  数据列表显示区域  -->
+                        <ScrollViewer
                             Grid.Row="2"
-                            Margin="0,10,0,0"
-                            Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center" Text="在线用户: " />
-                            <TextBlock
-                                Margin="5,0,0,0"
-                                VerticalAlignment="Center"
-                                Text="{Binding OnlineUsers.Count}" />
+                            Margin="0,15,0,0"
+                            HorizontalScrollBarVisibility="Disabled"
+                            VerticalScrollBarVisibility="Auto">
+
+                            <Grid>
+                                <!--  在线用户列表  -->
+                                <ListBox
+                                    Background="Transparent"
+                                    IsVisible="{Binding IsOnlineUsersTabSelected}"
+                                    ItemsSource="{Binding OnlineUsers}"
+                                    SelectedItem="{Binding SelectedUser}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid ColumnDefinitions="Auto,*,Auto" ToolTip.Tip="{Binding LastLoginText}">
+                                                <Ellipse
+                                                    Width="8"
+                                                    Height="8"
+                                                    Margin="0,0,8,0"
+                                                    VerticalAlignment="Center"
+                                                    Fill="{DynamicResource SystemControlHighlightAccentBrush}" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock FontWeight="SemiBold" Text="{Binding UserName}" />
+                                                    <TextBlock
+                                                        FontSize="10"
+                                                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                        Text="{Binding UserId}" />
+                                                </StackPanel>
+                                                <TextBlock
+                                                    Grid.Column="2"
+                                                    Margin="5,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="10"
+                                                    Foreground="{DynamicResource SystemControlHighlightAccentBrush}"
+                                                    Text="{Binding StatusText}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <!--  所有用户列表  -->
+                                <ListBox
+                                    Background="Transparent"
+                                    IsVisible="{Binding IsAllUsersTabSelected}"
+                                    ItemsSource="{Binding AllUsers}"
+                                    SelectedItem="{Binding SelectedUser}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ToolTip.Tip="{Binding LastLoginText}">
+                                                <Border
+                                                    Width="8"
+                                                    Height="8"
+                                                    Margin="0,0,8,0"
+                                                    VerticalAlignment="Center"
+                                                    Background="{DynamicResource SystemControlHighlightAccentBrush}"
+                                                    CornerRadius="4" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock FontWeight="SemiBold" Text="{Binding UserName}" />
+                                                    <TextBlock
+                                                        FontSize="10"
+                                                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                        Text="{Binding UserId}" />
+                                                </StackPanel>
+                                                <TextBlock
+                                                    Grid.Column="2"
+                                                    Margin="5,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="10"
+                                                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                    Text="{Binding StatusText}" />
+                                                <Button
+                                                    Grid.Column="3"
+                                                    Margin="5,0,0,0"
+                                                    Padding="4,2"
+                                                    Background="Red"
+                                                    Command="{Binding $parent[ItemsControl].((vm:MainWindowViewModel)DataContext).DeleteUserCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Content="删除"
+                                                    FontSize="9"
+                                                    Foreground="White" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <!--  消息历史列表  -->
+                                <ListBox
+                                    Background="Transparent"
+                                    IsVisible="{Binding IsMessagesTabSelected}"
+                                    ItemsSource="{Binding RecentMessages}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="0,4" Spacing="4">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock
+                                                        Grid.Column="0"
+                                                        FontWeight="SemiBold"
+                                                        Text="{Binding DisplayText}"
+                                                        TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        FontSize="10"
+                                                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                        Text="{Binding TimestampText}" />
+                                                </Grid>
+                                                <Grid ColumnDefinitions="Auto,Auto,*">
+                                                    <TextBlock
+                                                        Grid.Column="0"
+                                                        FontSize="9"
+                                                        Foreground="{DynamicResource SystemControlHighlightAccentBrush}"
+                                                        Text="{Binding MessageTypeText}" />
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        Margin="8,0,0,0"
+                                                        FontSize="9"
+                                                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                        Text="{Binding StatusText}" />
+                                                </Grid>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <!--  好友关系列表  -->
+                                <ListBox
+                                    Background="Transparent"
+                                    IsVisible="{Binding IsFriendshipsTabSelected}"
+                                    ItemsSource="{Binding Friendships}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,4" ColumnDefinitions="*,Auto">
+                                                <TextBlock
+                                                    Grid.Column="0"
+                                                    VerticalAlignment="Center"
+                                                    FontWeight="SemiBold"
+                                                    Text="{Binding DisplayText}" />
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="10"
+                                                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                    Text="{Binding CreatedAtText}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </ScrollViewer>
+
+                        <!--  统计信息和操作按钮  -->
+                        <StackPanel
+                            Grid.Row="3"
+                            Margin="0,15,0,0"
+                            Spacing="8">
+
+                            <!--  统计信息  -->
+                            <StackPanel Spacing="4">
+                                <StackPanel IsVisible="{Binding IsOnlineUsersTabSelected}" Orientation="Horizontal">
+                                    <TextBlock VerticalAlignment="Center" Text="在线用户: " />
+                                    <TextBlock
+                                        Margin="5,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Foreground="{DynamicResource SystemControlHighlightAccentBrush}"
+                                        Text="{Binding OnlineUsers.Count}" />
+                                </StackPanel>
+
+                                <StackPanel IsVisible="{Binding IsAllUsersTabSelected}" Orientation="Horizontal">
+                                    <TextBlock VerticalAlignment="Center" Text="总用户数: " />
+                                    <TextBlock
+                                        Margin="5,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Foreground="{DynamicResource SystemControlHighlightAccentBrush}"
+                                        Text="{Binding AllUsers.Count}" />
+                                </StackPanel>
+
+                                <StackPanel IsVisible="{Binding IsMessagesTabSelected}" Orientation="Horizontal">
+                                    <TextBlock VerticalAlignment="Center" Text="显示消息: " />
+                                    <TextBlock
+                                        Margin="5,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Foreground="{DynamicResource SystemControlHighlightAccentBrush}"
+                                        Text="{Binding RecentMessages.Count}" />
+                                </StackPanel>
+
+                                <StackPanel IsVisible="{Binding IsFriendshipsTabSelected}" Orientation="Horizontal">
+                                    <TextBlock VerticalAlignment="Center" Text="好友关系: " />
+                                    <TextBlock
+                                        Margin="5,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Foreground="{DynamicResource SystemControlHighlightAccentBrush}"
+                                        Text="{Binding Friendships.Count}" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!--  操作按钮  -->
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <Button
+                                    Padding="8,4"
+                                    Background="{DynamicResource SystemControlHighlightAccentBrush}"
+                                    Command="{Binding KickUserCommand}"
+                                    Content="踢出用户"
+                                    FontSize="10"
+                                    Foreground="White"
+                                    IsEnabled="{Binding SelectedUser}"
+                                    IsVisible="{Binding IsOnlineUsersTabSelected}" />
+
+                                <Button
+                                    Padding="8,4"
+                                    Background="Transparent"
+                                    BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                    BorderThickness="1"
+                                    Command="{Binding ClearLogsCommand}"
+                                    Content="清除日志"
+                                    FontSize="10" />
+                            </StackPanel>
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -137,7 +384,7 @@
                 <!--  右侧消息区  -->
                 <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
 
-                    <!--  系统消息标题  -->
+                    <!--  动态标题  -->
                     <Border
                         Grid.Row="0"
                         Margin="0,0,0,15"
@@ -146,31 +393,98 @@
                         <TextBlock
                             Margin="0"
                             Classes="Header"
-                            Text="系统消息" />
+                            Text="{Binding SelectedTab}" />
                     </Border>
 
-                    <!--  消息记录  -->
+                    <!--  内容显示区域  -->
                     <Border
                         Grid.Row="1"
                         Margin="0,0,0,15"
                         Padding="15"
                         Classes="Card">
-                        <ScrollViewer x:Name="MessagesScroller" VerticalScrollBarVisibility="Auto">
-                            <TextBox
-                                Padding="0"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                IsReadOnly="True"
-                                Text="{Binding SystemMessages}"
-                                TextWrapping="Wrap" />
-                        </ScrollViewer>
+
+                        <Grid>
+                            <!--  系统消息日志  -->
+                            <ScrollViewer
+                                x:Name="MessagesScroller"
+                                HorizontalScrollBarVisibility="Disabled"
+                                IsVisible="{Binding IsOnlineUsersTabSelected}"
+                                VerticalScrollBarVisibility="Auto">
+                                <TextBox
+                                    Padding="0"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    IsReadOnly="True"
+                                    Text="{Binding SystemMessages}"
+                                    TextWrapping="Wrap" />
+                            </ScrollViewer>
+
+                            <!--  用户详细信息  -->
+                            <StackPanel IsVisible="{Binding IsAllUsersTabSelected}" Spacing="12">
+                                <TextBlock
+                                    FontSize="16"
+                                    FontWeight="SemiBold"
+                                    Text="用户管理" />
+                                <TextBlock Text="• 查看所有注册用户" />
+                                <TextBlock Text="• 删除用户及其相关数据" />
+                                <TextBlock Text="• 搜索用户信息" />
+                                <TextBlock Text="• 查看用户状态和最后登录时间" />
+                                <TextBlock
+                                    FontSize="12"
+                                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                    Text="选择左侧用户列表中的用户可以进行操作" />
+                            </StackPanel>
+
+                            <!--  消息历史详情  -->
+                            <StackPanel IsVisible="{Binding IsMessagesTabSelected}" Spacing="12">
+                                <TextBlock
+                                    FontSize="16"
+                                    FontWeight="SemiBold"
+                                    Text="消息历史" />
+                                <TextBlock Text="• 查看最近100条消息记录" />
+                                <TextBlock Text="• 监控系统消息和用户消息" />
+                                <TextBlock Text="• 搜索消息内容和发送者" />
+                                <TextBlock Text="• 查看消息状态和时间戳" />
+                                <Border
+                                    Padding="10"
+                                    Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                                    CornerRadius="6">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock FontWeight="SemiBold" Text="消息统计" />
+                                        <TextBlock Text="{Binding ServerStats}" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+
+                            <!--  好友关系详情  -->
+                            <StackPanel IsVisible="{Binding IsFriendshipsTabSelected}" Spacing="12">
+                                <TextBlock
+                                    FontSize="16"
+                                    FontWeight="SemiBold"
+                                    Text="好友关系管理" />
+                                <TextBlock Text="• 查看所有用户的好友关系" />
+                                <TextBlock Text="• 监控好友添加时间" />
+                                <TextBlock Text="• 搜索特定用户的好友关系" />
+                                <TextBlock Text="• 分析用户社交网络" />
+                                <Border
+                                    Padding="10"
+                                    Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                                    CornerRadius="6">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock FontWeight="SemiBold" Text="关系统计" />
+                                        <TextBlock Text="{Binding ServerStats}" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
                     </Border>
 
-                    <!--  消息输入区  -->
+                    <!--  系统消息输入区（仅在在线用户标签页显示）  -->
                     <Border
                         Grid.Row="2"
                         Padding="10"
-                        Classes="Card">
+                        Classes="Card"
+                        IsVisible="{Binding IsOnlineUsersTabSelected}">
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBox
                                 Grid.Column="0"
@@ -184,7 +498,14 @@
                                 Padding="15,8"
                                 Classes="Primary"
                                 Command="{Binding SendSystemMessageCommand}">
-                                <TextBlock Text="广播消息" />
+                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                    <PathIcon
+                                        Width="14"
+                                        Height="14"
+                                        Data="M2,21L23,12L2,3V10L17,12L2,14V21Z"
+                                        Foreground="White" />
+                                    <TextBlock Text="广播消息" />
+                                </StackPanel>
                             </Button>
                         </Grid>
                     </Border>

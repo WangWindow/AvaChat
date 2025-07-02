@@ -154,7 +154,7 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             // 设置当前用户信息
-            CurrentUserName = App.CurrentUserId ?? "未登录";
+            CurrentUserName = App.CurrentUserName ?? App.CurrentUserId ?? "未登录";
             UserStatus = string.IsNullOrEmpty(App.CurrentUserId) ? "离线" : "在线";
 
             // 初始化好友列表

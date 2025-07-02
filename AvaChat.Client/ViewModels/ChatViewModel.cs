@@ -24,6 +24,12 @@ public partial class ChatViewModel : ViewModelBase
     [ObservableProperty]
     private string _statusText = "未连接";
 
+    // 滚动到底部事件
+    public event EventHandler? ScrollToBottomRequested;
+
+    [ObservableProperty]
+    private bool _autoScrollToBottom = true;
+
     public ChatViewModel()
     {
         // 设置SignalR消息处理
@@ -68,10 +74,22 @@ public partial class ChatViewModel : ViewModelBase
                     {
                         Messages.Add(message);
                         Console.WriteLine($"[ChatViewModel] 添加收到的消息到UI: {message.MessageId}, 发送者: {message.SenderId}");
+
+                        // 触发滚动到底部
+                        if (AutoScrollToBottom)
+                        {
+                            ScrollToBottomRequested?.Invoke(this, EventArgs.Empty);
+                        }
                     }
                     else
                     {
                         Console.WriteLine($"[ChatViewModel] 消息已存在，跳过: {message.MessageId}");
+                    }
+
+                    // 自动滚动到底部
+                    if (AutoScrollToBottom)
+                    {
+                        ScrollToBottomRequested?.Invoke(this, EventArgs.Empty);
                     }
                 });
             }
@@ -92,6 +110,12 @@ public partial class ChatViewModel : ViewModelBase
                     {
                         Messages.Add(message);
                         Console.WriteLine($"[ChatViewModel] 立即显示发送的消息: {message.MessageId}");
+
+                        // 触发滚动到底部
+                        if (AutoScrollToBottom)
+                        {
+                            ScrollToBottomRequested?.Invoke(this, EventArgs.Empty);
+                        }
                     }
                     else
                     {
@@ -115,8 +139,11 @@ public partial class ChatViewModel : ViewModelBase
                 // 更新当前聊天好友状态
                 Dispatcher.UIThread.InvokeAsync(() =>
                 {
-                    CurrentFriend.FriendUser.Status = info.Status;
-                    UpdateStatusText();
+                    if (CurrentFriend.FriendUser != null)
+                    {
+                        CurrentFriend.FriendUser.Status = info.Status;
+                        UpdateStatusText();
+                    }
                 });
             }
         };
@@ -183,6 +210,7 @@ public partial class ChatViewModel : ViewModelBase
     public void LoadChatWithFriend(Friendship friend)
     {
         CurrentFriend = friend;
+        _ = LoadChatHistory();
     }
 
     private async Task LoadChatHistory()
@@ -207,6 +235,13 @@ public partial class ChatViewModel : ViewModelBase
                 {
                     Messages.Add(msg);
                 }
+
+                // 加载完历史消息后滚动到底部
+                if (Messages.Count > 0)
+                {
+                    await Task.Delay(100); // 等待UI更新
+                    ScrollToBottomRequested?.Invoke(this, EventArgs.Empty);
+                }
             }
         }
         catch (Exception ex)
@@ -223,10 +258,11 @@ public partial class ChatViewModel : ViewModelBase
             return;
         }
 
-        StatusText = CurrentFriend.FriendUser.Status switch
+        StatusText = CurrentFriend.FriendUser?.Status switch
         {
             UserStatus.Online => "在线",
             UserStatus.Offline => "离线",
+            null => "未知状态",
             _ => "未知状态"
         };
     }

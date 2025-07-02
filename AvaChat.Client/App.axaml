@@ -27,6 +27,7 @@
         <converters:AvatarColorConverter x:Key="AvatarColorConverter" />
         <!--  全局托盘图标资源，供C#通过TryGetResource("AppTrayIcon")统一获取  -->
         <WindowIcon x:Key="AppTrayIcon">avares://AvaChat.Client/Assets/avalonia-logo.ico</WindowIcon>
+        <WindowIcon x:Key="AppTrayIconAlert">avares://AvaChat.Client/Assets/alert1.ico</WindowIcon>
     </Application.Resources>
 
     <Application.Styles>
