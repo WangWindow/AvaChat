@@ -98,6 +98,7 @@
             <Grid>
                 <!--  好友列表  -->
                 <ScrollViewer
+                    AllowAutoHide="True"
                     HorizontalScrollBarVisibility="Disabled"
                     IsVisible="{Binding !IsLoading}"
                     VerticalScrollBarVisibility="Auto">
@@ -178,11 +179,15 @@
                                                 FontSize="15"
                                                 FontWeight="SemiBold"
                                                 Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
-                                                Text="{Binding FriendUser.UserName}" />
+                                                Text="{Binding FriendUser.UserName}"
+                                                TextTrimming="CharacterEllipsis"
+                                                TextWrapping="NoWrap" />
                                             <TextBlock
                                                 FontSize="12"
                                                 Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                                                Text="{Binding FriendUser.Status, Converter={StaticResource StatusTextConverter}}" />
+                                                Text="{Binding FriendUser.Status, Converter={StaticResource StatusTextConverter}}"
+                                                TextTrimming="CharacterEllipsis"
+                                                TextWrapping="NoWrap" />
                                         </StackPanel>
                                     </Grid>
                                 </Border>

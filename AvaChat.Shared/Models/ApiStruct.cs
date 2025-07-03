@@ -135,7 +135,9 @@ public class FriendRequest
     public string Message { get; set; } = string.Empty;
 
     [JsonPropertyName("createdAt")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow; [JsonPropertyName("status")]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [JsonPropertyName("status")]
     public FriendRequestStatus Status { get; set; } = FriendRequestStatus.Pending;
 }
 

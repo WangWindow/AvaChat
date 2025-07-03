@@ -221,14 +221,21 @@ public partial class NotificationViewModel : ViewModelBase
     {
         try
         {
+            var currentUserId = App.CurrentUserId;
+            if (string.IsNullOrEmpty(currentUserId))
+                return;
+
+            // 先清理重复的系统消息
+            await CleanupDuplicateSystemMessagesAsync();
+
             // 从本地数据库加载系统消息
             var factory = new ClientDbContextFactory();
             using var db = factory.CreateDbContext([]);
 
-            // 查询系统消息
+            // 查询只属于当前用户的系统消息
             var messages = await Task.Run(() => db.Messages
-                .Where(m => m.SenderId == "system" ||
-                           m.MessageType == MessageType.System)
+                .Where(m => (m.SenderId == "system" || m.MessageType == MessageType.System) &&
+                           m.ReceiverId == currentUserId) // 只获取发给当前用户的系统消息
                 .OrderByDescending(m => m.Timestamp)
                 .Take(50)
                 .ToList());
@@ -291,5 +298,63 @@ public partial class NotificationViewModel : ViewModelBase
     public async Task RefreshSystemMessagesAsync()
     {
         await LoadSystemMessagesAsync();
+    }
+
+    /// <summary>
+    /// 清理重复的系统消息（基于内容和时间的相似性）
+    /// </summary>
+    private async Task CleanupDuplicateSystemMessagesAsync()
+    {
+        try
+        {
+            var currentUserId = App.CurrentUserId;
+            if (string.IsNullOrEmpty(currentUserId))
+                return;
+
+            var factory = new ClientDbContextFactory();
+            using var db = factory.CreateDbContext([]);
+
+            // 获取当前用户的所有系统消息
+            var allMessages = await Task.Run(() => db.Messages
+                .Where(m => (m.SenderId == "system" || m.MessageType == MessageType.System) &&
+                           m.ReceiverId == currentUserId)
+                .OrderByDescending(m => m.Timestamp)
+                .ToList());
+
+            var messagesToDelete = new List<Message>();
+            var seenMessages = new HashSet<string>();
+
+            foreach (var message in allMessages)
+            {
+                // 创建消息的唯一标识（基于内容和大致时间）
+                var messageKey = $"{message.Content}_{message.Timestamp:yyyy-MM-dd-HH-mm}";
+
+                if (seenMessages.Contains(messageKey))
+                {
+                    // 发现重复消息，标记为删除
+                    messagesToDelete.Add(message);
+                }
+                else
+                {
+                    seenMessages.Add(messageKey);
+                }
+            }
+
+            // 删除重复的消息
+            if (messagesToDelete.Count > 0)
+            {
+                await Task.Run(() =>
+                {
+                    db.Messages.RemoveRange(messagesToDelete);
+                    db.SaveChanges();
+                });
+
+                Console.WriteLine($"[CleanupDuplicateSystemMessagesAsync] 删除了 {messagesToDelete.Count} 条重复的系统消息");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[CleanupDuplicateSystemMessagesAsync] Exception: {ex.Message}");
+        }
     }
 }

@@ -127,13 +127,17 @@ public class SignalRClient : IDisposable
         // 接收系统消息
         _hubConnection.On<Message>("ReceiveSystemMessage", (message) =>
         {
-            OnSystemMessageReceived?.Invoke(this, message);
+            // 只处理发给当前用户的系统消息
+            if (message.ReceiverId == _userId)
+            {
+                OnSystemMessageReceived?.Invoke(this, message);
 
-            // 显示系统消息通知
-            NotificationManager.ShowMessageNotification(true, "系统", message.Content);
+                // 显示系统消息通知
+                NotificationManager.ShowMessageNotification(true, "系统", message.Content);
 
-            // 本地保存系统消息
-            SaveMessageToLocalDb(message);
+                // 本地保存系统消息
+                SaveMessageToLocalDb(message);
+            }
         });
 
         // 消息发送成功回调

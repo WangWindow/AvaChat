@@ -34,10 +34,16 @@
                 <ScrollViewer
                     Name="MessageScrollViewer"
                     Padding="20"
+                    AllowAutoHide="True"
                     HorizontalScrollBarVisibility="Disabled"
                     IsVisible="{Binding CurrentFriend, Converter={StaticResource NotNullToVisibilityConverter}}"
                     VerticalScrollBarVisibility="Auto">
                     <ItemsControl ItemsSource="{Binding Messages}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Spacing="4" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <!--  消息气泡  -->
@@ -57,11 +63,17 @@
                                         CornerRadius="12,12,12,4"
                                         IsVisible="{Binding SenderId, Converter={StaticResource IsNotCurrentUserConverter}}">
                                         <StackPanel Spacing="4">
-                                            <TextBlock
-                                                FontSize="14"
-                                                Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
-                                                Text="{Binding Content}"
-                                                TextWrapping="Wrap" />
+                                            <ScrollViewer
+                                                MaxHeight="200"
+                                                AllowAutoHide="True"
+                                                HorizontalScrollBarVisibility="Disabled"
+                                                VerticalScrollBarVisibility="Auto">
+                                                <TextBlock
+                                                    FontSize="14"
+                                                    Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                                                    Text="{Binding Content}"
+                                                    TextWrapping="Wrap" />
+                                            </ScrollViewer>
                                             <TextBlock
                                                 HorizontalAlignment="Left"
                                                 FontSize="10"
@@ -79,11 +91,17 @@
                                         CornerRadius="12,12,4,12"
                                         IsVisible="{Binding SenderId, Converter={StaticResource IsCurrentUserConverter}}">
                                         <StackPanel Spacing="4">
-                                            <TextBlock
-                                                FontSize="14"
-                                                Foreground="White"
-                                                Text="{Binding Content}"
-                                                TextWrapping="Wrap" />
+                                            <ScrollViewer
+                                                MaxHeight="200"
+                                                AllowAutoHide="True"
+                                                HorizontalScrollBarVisibility="Disabled"
+                                                VerticalScrollBarVisibility="Auto">
+                                                <TextBlock
+                                                    FontSize="14"
+                                                    Foreground="White"
+                                                    Text="{Binding Content}"
+                                                    TextWrapping="Wrap" />
+                                            </ScrollViewer>
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*" />
@@ -139,27 +157,32 @@
                         BorderThickness="1.5"
                         BoxShadow="0 2 8 #20000000"
                         CornerRadius="24">
-                        <TextBox
+                        <ScrollViewer
                             MaxHeight="120"
-                            VerticalContentAlignment="Center"
-                            AcceptsReturn="True"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            FontSize="14"
-                            LineHeight="20"
-                            Text="{Binding MessageText}"
-                            TextWrapping="Wrap"
-                            Watermark="输入消息... (Enter换行，Ctrl+Enter发送)">
-                            <TextBox.KeyBindings>
-                                <KeyBinding Command="{Binding SendMessageCommand}" Gesture="Ctrl+Return" />
-                            </TextBox.KeyBindings>
-                            <TextBox.Styles>
-                                <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
-                                    <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightAccentBrush}" />
-                                    <Setter Property="BorderThickness" Value="2" />
-                                </Style>
-                            </TextBox.Styles>
-                        </TextBox>
+                            AllowAutoHide="True"
+                            HorizontalScrollBarVisibility="Disabled"
+                            VerticalScrollBarVisibility="Auto">
+                            <TextBox
+                                VerticalContentAlignment="Center"
+                                AcceptsReturn="True"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                FontSize="14"
+                                LineHeight="20"
+                                Text="{Binding MessageText}"
+                                TextWrapping="Wrap"
+                                Watermark="输入消息... (Enter换行，Ctrl+Enter发送)">
+                                <TextBox.KeyBindings>
+                                    <KeyBinding Command="{Binding SendMessageCommand}" Gesture="Ctrl+Return" />
+                                </TextBox.KeyBindings>
+                                <TextBox.Styles>
+                                    <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightAccentBrush}" />
+                                        <Setter Property="BorderThickness" Value="2" />
+                                    </Style>
+                                </TextBox.Styles>
+                            </TextBox>
+                        </ScrollViewer>
                     </Border>
 
                     <!--  发送按钮  -->
@@ -175,19 +198,6 @@
                         CornerRadius="24"
                         IsEnabled="{Binding !IsSending}"
                         ToolTip.Tip="发送消息">
-                        <Button.Styles>
-                            <Style Selector="Button:pointerover">
-                                <Setter Property="Background" Value="{DynamicResource SystemControlHighlightAccentBrush}" />
-                                <Setter Property="Opacity" Value="0.9" />
-                            </Style>
-                            <Style Selector="Button:pressed">
-                                <Setter Property="Opacity" Value="0.7" />
-                            </Style>
-                            <Style Selector="Button:disabled">
-                                <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
-                                <Setter Property="Opacity" Value="0.6" />
-                            </Style>
-                        </Button.Styles>
                         <Grid>
                             <!--  发送图标  -->
                             <Path

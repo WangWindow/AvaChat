@@ -75,13 +75,13 @@
                             <TextBlock Foreground="White" Text="运行中" />
                         </Border>
                     </StackPanel>
-
+                    <!--
                     <StackPanel
                         Grid.Column="2"
                         Orientation="Horizontal"
                         Spacing="15">
                         <TextBlock VerticalAlignment="Center" Text="{Binding ServerStats}" />
-                    </StackPanel>
+                    </StackPanel>-->
                 </Grid>
             </Border>
 
@@ -358,16 +358,6 @@
 
                             <!--  操作按钮  -->
                             <StackPanel Orientation="Horizontal" Spacing="5">
-                                <!-- <Button
-                                    Padding="8,4"
-                                    Background="{DynamicResource SystemControlHighlightAccentBrush}"
-                                    Command="{Binding KickUserCommand}"
-                                    Content="踢出用户"
-                                    FontSize="10"
-                                    Foreground="White"
-                                    IsEnabled="{Binding SelectedUser}"
-                                    IsVisible="{Binding IsOnlineUsersTabSelected}" />-->
-
                                 <Button
                                     Padding="8,4"
                                     Background="Transparent"
@@ -381,134 +371,399 @@
                     </Grid>
                 </Border>
 
-                <!--  右侧消息区  -->
-                <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
+                <!--  右侧仪表板区  -->
+                <Grid Grid.Column="1" RowDefinitions="Auto,*">
 
-                    <!--  动态标题  -->
+                    <!--  仪表板标题和快速操作  -->
                     <Border
                         Grid.Row="0"
                         Margin="0,0,0,15"
                         Padding="15,10"
                         Classes="Card">
-                        <TextBlock
-                            Margin="0"
-                            Classes="Header"
-                            Text="{Binding SelectedTab}" />
-                    </Border>
-
-                    <!--  内容显示区域  -->
-                    <Border
-                        Grid.Row="1"
-                        Margin="0,0,0,15"
-                        Padding="15"
-                        Classes="Card">
-
-                        <Grid>
-                            <!--  系统消息日志  -->
-                            <ScrollViewer
-                                x:Name="MessagesScroller"
-                                HorizontalScrollBarVisibility="Disabled"
-                                IsVisible="{Binding IsOnlineUsersTabSelected}"
-                                VerticalScrollBarVisibility="Auto">
-                                <TextBox
-                                    Padding="0"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    IsReadOnly="True"
-                                    Text="{Binding SystemMessages}"
-                                    TextWrapping="Wrap" />
-                            </ScrollViewer>
-
-                            <!--  用户详细信息  -->
-                            <StackPanel IsVisible="{Binding IsAllUsersTabSelected}" Spacing="12">
-                                <TextBlock
-                                    FontSize="16"
-                                    FontWeight="SemiBold"
-                                    Text="用户管理" />
-                                <TextBlock Text="• 查看所有注册用户" />
-                                <TextBlock Text="• 删除用户及其相关数据" />
-                                <TextBlock Text="• 搜索用户信息" />
-                                <TextBlock Text="• 查看用户状态和最后登录时间" />
-                                <TextBlock
-                                    FontSize="12"
-                                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                                    Text="选择左侧用户列表中的用户可以进行操作" />
-                            </StackPanel>
-
-                            <!--  消息历史详情  -->
-                            <StackPanel IsVisible="{Binding IsMessagesTabSelected}" Spacing="12">
-                                <TextBlock
-                                    FontSize="16"
-                                    FontWeight="SemiBold"
-                                    Text="消息历史" />
-                                <TextBlock Text="• 查看最近100条消息记录" />
-                                <TextBlock Text="• 监控系统消息和用户消息" />
-                                <TextBlock Text="• 搜索消息内容和发送者" />
-                                <TextBlock Text="• 查看消息状态和时间戳" />
-                                <Border
-                                    Padding="10"
-                                    Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
-                                    CornerRadius="6">
-                                    <StackPanel Spacing="4">
-                                        <TextBlock FontWeight="SemiBold" Text="消息统计" />
-                                        <TextBlock Text="{Binding ServerStats}" />
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-
-                            <!--  好友关系详情  -->
-                            <StackPanel IsVisible="{Binding IsFriendshipsTabSelected}" Spacing="12">
-                                <TextBlock
-                                    FontSize="16"
-                                    FontWeight="SemiBold"
-                                    Text="好友关系管理" />
-                                <TextBlock Text="• 查看所有用户的好友关系" />
-                                <TextBlock Text="• 监控好友添加时间" />
-                                <TextBlock Text="• 搜索特定用户的好友关系" />
-                                <TextBlock Text="• 分析用户社交网络" />
-                                <Border
-                                    Padding="10"
-                                    Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
-                                    CornerRadius="6">
-                                    <StackPanel Spacing="4">
-                                        <TextBlock FontWeight="SemiBold" Text="关系统计" />
-                                        <TextBlock Text="{Binding ServerStats}" />
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <!--  系统消息输入区（仅在在线用户标签页显示）  -->
-                    <Border
-                        Grid.Row="2"
-                        Padding="10"
-                        Classes="Card"
-                        IsVisible="{Binding IsOnlineUsersTabSelected}">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBox
-                                Grid.Column="0"
-                                Padding="10,5"
-                                Text="{Binding MessageToSend}"
-                                Watermark="输入系统广播消息..." />
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <PathIcon
+                                    Width="20"
+                                    Height="20"
+                                    VerticalAlignment="Center"
+                                    Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z"
+                                    Foreground="{DynamicResource SystemControlHighlightAccentBrush}" />
+                                <TextBlock
+                                    Margin="0"
+                                    VerticalAlignment="Center"
+                                    Classes="Header"
+                                    Text="服务器监控仪表板" />
+                            </StackPanel>
 
-                            <Button
+                            <StackPanel
                                 Grid.Column="1"
-                                Margin="10,0,0,0"
-                                Padding="15,8"
-                                Classes="Primary"
-                                Command="{Binding SendSystemMessageCommand}">
-                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                Orientation="Horizontal"
+                                Spacing="8">
+                                <Button
+                                    Padding="8,4"
+                                    Background="Transparent"
+                                    BorderBrush="{DynamicResource SystemControlHighlightAccentBrush}"
+                                    BorderThickness="1"
+                                    Command="{Binding RefreshDataCommand}"
+                                    ToolTip.Tip="刷新数据">
                                     <PathIcon
                                         Width="14"
                                         Height="14"
-                                        Data="M2,21L23,12L2,3V10L17,12L2,14V21Z"
-                                        Foreground="White" />
-                                    <TextBlock Text="广播消息" />
-                                </StackPanel>
-                            </Button>
+                                        Data="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"
+                                        Foreground="{DynamicResource SystemControlHighlightAccentBrush}" />
+                                </Button>
+                                <Button
+                                    Padding="8,4"
+                                    Background="Transparent"
+                                    BorderBrush="Orange"
+                                    BorderThickness="1"
+                                    Command="{Binding CreateBackupCommand}"
+                                    ToolTip.Tip="创建备份">
+                                    <PathIcon
+                                        Width="14"
+                                        Height="14"
+                                        Data="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"
+                                        Foreground="Orange" />
+                                </Button>
+                            </StackPanel>
                         </Grid>
                     </Border>
+
+                    <!--  仪表板内容区  -->
+                    <Grid Grid.Row="1" RowDefinitions="Auto,Auto,*">
+
+                        <!--  统计卡片区  -->
+                        <Grid
+                            Grid.Row="0"
+                            Margin="0,0,0,15"
+                            ColumnDefinitions="*,*,*">
+                            <!--  在线用户统计  -->
+                            <Border
+                                Grid.Column="0"
+                                Margin="0,0,5,0"
+                                Padding="15"
+                                Background="#E3F2FD"
+                                Classes="Card">
+                                <StackPanel Spacing="8">
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <Ellipse
+                                            Width="12"
+                                            Height="12"
+                                            VerticalAlignment="Center"
+                                            Fill="#4CAF50" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            Margin="8,0,0,0"
+                                            VerticalAlignment="Center"
+                                            FontSize="12"
+                                            FontWeight="SemiBold"
+                                            Foreground="#666"
+                                            Text="在线用户" />
+                                    </Grid>
+                                    <TextBlock
+                                        FontSize="24"
+                                        FontWeight="Bold"
+                                        Foreground="#2196F3"
+                                        Text="{Binding OnlineUsersCount}" />
+                                    <TextBlock
+                                        FontSize="10"
+                                        Foreground="#666"
+                                        Text="{Binding OnlineUsersChange}" />
+                                </StackPanel>
+                            </Border>
+
+                            <!--  今日消息统计  -->
+                            <Border
+                                Grid.Column="1"
+                                Margin="5,0"
+                                Padding="15"
+                                Background="#FFF3E0"
+                                Classes="Card">
+                                <StackPanel Spacing="8">
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <PathIcon
+                                            Width="12"
+                                            Height="12"
+                                            VerticalAlignment="Center"
+                                            Data="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4A2,2 0 0,0 20,2Z"
+                                            Foreground="#FF9800" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            Margin="8,0,0,0"
+                                            VerticalAlignment="Center"
+                                            FontSize="12"
+                                            FontWeight="SemiBold"
+                                            Foreground="#666"
+                                            Text="今日消息" />
+                                    </Grid>
+                                    <TextBlock
+                                        FontSize="24"
+                                        FontWeight="Bold"
+                                        Foreground="#FF9800"
+                                        Text="{Binding TodayMessagesCount}" />
+                                    <TextBlock
+                                        FontSize="10"
+                                        Foreground="#666"
+                                        Text="{Binding TodayMessagesChange}" />
+                                </StackPanel>
+                            </Border>
+
+                            <!--  数据库大小  -->
+                            <Border
+                                Grid.Column="2"
+                                Margin="5,0,0,0"
+                                Padding="15"
+                                Background="#F3E5F5"
+                                Classes="Card">
+                                <StackPanel Spacing="8">
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <PathIcon
+                                            Width="12"
+                                            Height="12"
+                                            VerticalAlignment="Center"
+                                            Data="M12,3C7.58,3 4,4.79 4,7C4,9.21 7.58,11 12,11C16.42,11 20,9.21 20,7C20,4.79 16.42,3 12,3M4,9V12C4,14.21 7.58,16 12,16C16.42,16 20,14.21 20,12V9C20,11.21 16.42,13 12,13C7.58,13 4,11.21 4,9M4,14V17C4,19.21 7.58,21 12,21C16.42,21 20,19.21 20,17V14C20,16.21 16.42,18 12,18C7.58,18 4,16.21 4,14Z"
+                                            Foreground="#9C27B0" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            Margin="8,0,0,0"
+                                            VerticalAlignment="Center"
+                                            FontSize="12"
+                                            FontWeight="SemiBold"
+                                            Foreground="#666"
+                                            Text="数据库大小" />
+                                    </Grid>
+                                    <TextBlock
+                                        FontSize="24"
+                                        FontWeight="Bold"
+                                        Foreground="#9C27B0"
+                                        Text="{Binding DatabaseSize}" />
+                                    <TextBlock
+                                        FontSize="10"
+                                        Foreground="#666"
+                                        Text="{Binding LastBackupTime}" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <!--  实时活动日志  -->
+                        <Border
+                            Grid.Row="1"
+                            Margin="0,0,0,15"
+                            Padding="15,10"
+                            Classes="Card">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon
+                                        Width="16"
+                                        Height="16"
+                                        VerticalAlignment="Center"
+                                        Data="M14,12H15.5V16.82L17.94,18.23L17.19,19.53L14,17.69V12M16,9A7,7 0 0,1 23,16A7,7 0 0,1 16,23A7,7 0 0,1 9,16A7,7 0 0,1 16,9M16,11A5,5 0 0,0 11,16A5,5 0 0,0 16,21A5,5 0 0,0 21,16A5,5 0 0,0 16,11M15,1H9V3H15V1M20.25,4.5L18.84,3.08L17.45,4.47L18.86,5.88L20.25,4.5M3.75,4.5L5.16,5.91L6.55,4.5L5.14,3.09L3.75,4.5M1,10.5V12.5H3V10.5H1M20,10.5V12.5H22V10.5H20Z"
+                                        Foreground="{DynamicResource SystemControlHighlightAccentBrush}" />
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontWeight="SemiBold"
+                                        Text="实时活动日志" />
+                                </StackPanel>
+
+                                <TextBlock
+                                    Grid.Column="2"
+                                    VerticalAlignment="Center"
+                                    FontSize="10"
+                                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                    Text="{Binding CurrentTime}" />
+                            </Grid>
+                        </Border>
+
+                        <!--  主要内容区  -->
+                        <Grid Grid.Row="2" ColumnDefinitions="2*,*">
+
+                            <!--  活动日志和系统消息  -->
+                            <Border
+                                Grid.Column="0"
+                                Margin="0,0,8,0"
+                                Padding="15"
+                                Classes="Card">
+                                <Grid RowDefinitions="Auto,*,Auto">
+                                    <TextBlock
+                                        Grid.Row="0"
+                                        Margin="0,0,0,10"
+                                        FontWeight="SemiBold"
+                                        Text="系统活动日志" />
+
+                                    <ScrollViewer
+                                        x:Name="ActivityLogScroller"
+                                        Grid.Row="1"
+                                        HorizontalScrollBarVisibility="Disabled"
+                                        VerticalScrollBarVisibility="Auto">
+                                        <TextBox
+                                            Padding="0"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            FontFamily="Consolas,Monaco,monospace"
+                                            FontSize="11"
+                                            IsReadOnly="True"
+                                            Text="{Binding SystemMessages}"
+                                            TextWrapping="Wrap" />
+                                    </ScrollViewer>
+
+                                    <!--  系统消息发送区  -->
+                                    <Grid
+                                        Grid.Row="2"
+                                        Margin="0,10,0,0"
+                                        ColumnDefinitions="*,Auto">
+                                        <TextBox
+                                            Grid.Column="0"
+                                            Padding="8,6"
+                                            Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                                            Text="{Binding MessageToSend}"
+                                            Watermark="输入系统广播消息..." />
+
+                                        <Button
+                                            Grid.Column="1"
+                                            Margin="8,0,0,0"
+                                            Padding="10,6"
+                                            Classes="Primary"
+                                            Command="{Binding SendSystemMessageCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <PathIcon
+                                                    Width="12"
+                                                    Height="12"
+                                                    Data="M2,21L23,12L2,3V10L17,12L2,14V21Z"
+                                                    Foreground="White" />
+                                                <TextBlock FontSize="11" Text="广播" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+
+                            <!--  快速操作和状态  -->
+                            <Border
+                                Grid.Column="1"
+                                Margin="8,0,0,0"
+                                Padding="15"
+                                Classes="Card">
+                                <StackPanel Spacing="15">
+                                    <TextBlock FontWeight="SemiBold" Text="快速操作" />
+
+                                    <!--  数据库操作  -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock
+                                            FontSize="12"
+                                            FontWeight="SemiBold"
+                                            Text="数据库管理" />
+                                        <Button
+                                            Padding="8,6"
+                                            HorizontalAlignment="Stretch"
+                                            Background="#4CAF50"
+                                            Command="{Binding OptimizeDatabaseCommand}"
+                                            Foreground="White">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <PathIcon
+                                                    Width="12"
+                                                    Height="12"
+                                                    Data="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,5V19H5V5H19M16.5,16L13.5,19L10.5,16H12.5V7H14.5V16H16.5Z"
+                                                    Foreground="White" />
+                                                <TextBlock FontSize="11" Text="优化数据库" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button
+                                            Padding="8,6"
+                                            HorizontalAlignment="Stretch"
+                                            Background="#FF9800"
+                                            Command="{Binding CleanupDataCommand}"
+                                            Foreground="White">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <PathIcon
+                                                    Width="12"
+                                                    Height="12"
+                                                    Data="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"
+                                                    Foreground="White" />
+                                                <TextBlock FontSize="11" Text="清理数据" />
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+
+                                    <!--  用户管理  -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock
+                                            FontSize="12"
+                                            FontWeight="SemiBold"
+                                            Text="用户管理" />
+                                        <Button
+                                            Padding="8,6"
+                                            HorizontalAlignment="Stretch"
+                                            Background="#2196F3"
+                                            Command="{Binding KickUserCommand}"
+                                            Foreground="White"
+                                            IsEnabled="{Binding SelectedUser, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <PathIcon
+                                                    Width="12"
+                                                    Height="12"
+                                                    Data="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M14.5,9L12,11.5L9.5,9L8,10.5L10.5,13L8,15.5L9.5,17L12,14.5L14.5,17L16,15.5L13.5,13L16,10.5L14.5,9Z"
+                                                    Foreground="White" />
+                                                <TextBlock FontSize="11" Text="踢出用户" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button
+                                            Padding="8,6"
+                                            HorizontalAlignment="Stretch"
+                                            Background="Transparent"
+                                            BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                            BorderThickness="1"
+                                            Command="{Binding ClearLogsCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <PathIcon
+                                                    Width="12"
+                                                    Height="12"
+                                                    Data="M5,3C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19H5V5H12V3H5M17.78,4C17.61,4 17.43,4.07 17.3,4.2L16.08,5.41L18.58,7.91L19.8,6.7C20.06,6.44 20.06,6 19.8,5.75L18.25,4.2C18.12,4.07 17.95,4 17.78,4M15.37,6.12L8,13.5V16H10.5L17.87,8.62L15.37,6.12Z"
+                                                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                                <TextBlock FontSize="11" Text="清除日志" />
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+
+                                    <!--  系统状态  -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock
+                                            FontSize="12"
+                                            FontWeight="SemiBold"
+                                            Text="系统状态" />
+                                        <Border
+                                            Padding="8"
+                                            Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                                            CornerRadius="4">
+                                            <StackPanel Spacing="4">
+                                                <Grid ColumnDefinitions="Auto,*">
+                                                    <Ellipse
+                                                        Width="6"
+                                                        Height="6"
+                                                        VerticalAlignment="Center"
+                                                        Fill="#4CAF50" />
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        Margin="6,0,0,0"
+                                                        FontSize="10"
+                                                        Text="服务器运行正常" />
+                                                </Grid>
+                                                <TextBlock
+                                                    FontSize="9"
+                                                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                    Text="{Binding ServerUptime}" />
+                                                <TextBlock
+                                                    FontSize="9"
+                                                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                    Text="{Binding ServerStats}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Grid>
                 </Grid>
             </Grid>
         </Grid>

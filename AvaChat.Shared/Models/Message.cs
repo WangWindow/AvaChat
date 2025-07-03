@@ -5,10 +5,10 @@ public class Message
     [Key]
     public int MessageId { get; set; }
 
-    [Required, StringLength(8)]
+    [Required]
     public string SenderId { get; set; } = string.Empty;
 
-    [Required, StringLength(8)]
+    [Required]
     public string ReceiverId { get; set; } = string.Empty;
 
     [Required]
@@ -42,4 +42,3 @@ public enum MessageType
     File = 2,  // 文件消息
     System = 3, // 系统消息
 }
-

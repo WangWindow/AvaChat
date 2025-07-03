@@ -43,7 +43,7 @@ public class ApiService(string baseUrl)
         var req = new RegisterRequest
         {
             UserName = userName,
-            Password = password
+            Password = SecurityService.EncryptPassword(password) // 加密密码传输
         };
         var url = _baseUrl + "/api/auth/register";
         var resp = await _httpClient.PostAsJsonAsync(url, req);
@@ -66,7 +66,7 @@ public class ApiService(string baseUrl)
         var req = new LoginRequest
         {
             UserId = userId,
-            Password = password
+            Password = SecurityService.EncryptPassword(password) // 加密密码传输
         };
         var url = _baseUrl + "/api/auth/login";
         var resp = await _httpClient.PostAsJsonAsync(url, req);

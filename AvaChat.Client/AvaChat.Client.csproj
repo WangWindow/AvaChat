@@ -6,6 +6,20 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+
+    <!-- 单文件发布配置 -->
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <UseAppHost>true</UseAppHost>
+
+    <!-- 版本信息 -->
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyTitle>AvaChat Client</AssemblyTitle>
+    <Product>AvaChat</Product>
+    <Description>AvaChat Desktop Client Application</Description>
+    <Copyright>Copyright © 2025</Copyright>
   </PropertyGroup>
 
   <ItemGroup>

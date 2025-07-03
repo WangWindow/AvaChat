@@ -63,6 +63,36 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     [ObservableProperty]
     private string _serverStats = "消息: 0 | 用户: 0 | 在线: 0";
 
+    // 新增仪表板属性
+    [ObservableProperty]
+    private int _onlineUsersCount = 0;
+
+    [ObservableProperty]
+    private string _onlineUsersChange = "较昨日 --";
+
+    [ObservableProperty]
+    private int _totalUsersCount = 0;
+
+    [ObservableProperty]
+    private int _todayMessagesCount = 0;
+
+    [ObservableProperty]
+    private string _todayMessagesChange = "较昨日 --";
+
+    [ObservableProperty]
+    private string _databaseSize = "-- MB";
+
+    [ObservableProperty]
+    private string _lastBackupTime = "从未备份";
+
+    [ObservableProperty]
+    private string _currentTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+    [ObservableProperty]
+    private string _serverUptime = "运行时间: --";
+
+    private readonly DateTime _serverStartTime = DateTime.Now;
+
     // 用户显示信息类
     public class UserDisplayInfo
     {
@@ -148,28 +178,13 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
                 var hubContext = scope.ServiceProvider.GetService<IHubContext<ChatHub>>();
                 var db = scope.ServiceProvider.GetRequiredService<ServerDbContext>();
 
-                if (hubContext != null)
+                if (hubContext != null && db != null)
                 {
-                    // 创建系统消息
-                    var systemMessage = new Message
-                    {
-                        SenderId = "System",
-                        ReceiverId = "Broadcast",
-                        Content = MessageToSend,
-                        Timestamp = timestamp,
-                        MessageType = MessageType.System,
-                        Status = MessageStatus.Delivered
-                    };
-
-                    // 保存到数据库
-                    db.Messages.Add(systemMessage);
-                    await db.SaveChangesAsync();
-
-                    // 广播给所有在线用户
-                    await hubContext.Clients.All.SendAsync("ReceiveSystemMessage", systemMessage);
+                    // 使用ChatHub的公共广播方法
+                    await ChatHub.SendServerBroadcast(hubContext, db, MessageToSend);
 
                     MessageToSend = string.Empty;
-                    SystemMessages += $"[{formattedTime}] 广播已发送给所有在线用户\n";
+                    SystemMessages += $"[{formattedTime}] 公共广播已发送给所有在线用户\n";
                 }
                 else
                 {
@@ -315,6 +330,13 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         // 获取服务提供程序
         _serviceProvider = Program.GetServiceProvider();
 
+        // 初始化仪表板属性
+        OnlineUsersCount = 0;
+        TodayMessagesCount = 0;
+        TotalUsersCount = 0;
+        DatabaseSize = "0 MB";
+        SystemMessages = "";
+
         // 添加启动消息
         var startTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         SystemMessages += $"[{startTime}] AvaChat 服务器已启动\n";
@@ -326,6 +348,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         // 初始化默认标签页数据
         _ = LoadTabDataAsync(SelectedTab);
+
+        // 初始化仪表板统计
+        _ = UpdateDashboardStatsAsync();
 
         // 设置定时更新服务器统计信息（每10秒更新一次）
         _statsTimer = new Timer(async _ =>
@@ -388,6 +413,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             var friendshipCount = await db.Friendships.CountAsync();
 
             ServerStats = $"消息: {messageCount} | 用户: {userCount} | 在线: {onlineCount} | 好友关系: {friendshipCount}";
+
+            // 同时更新仪表板统计
+            await UpdateDashboardStatsAsync();
         }
         catch (Exception ex)
         {
@@ -586,6 +614,204 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     {
         var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         SystemMessages += $"[{timestamp}] {message}\n";
+    }
+
+    // 新增仪表板命令
+    [RelayCommand]
+    private async Task RefreshDataAsync()
+    {
+        try
+        {
+            SystemMessages += $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 开始刷新数据...\n";
+
+            await UpdateServerStatsAsync();
+            await UpdateDashboardStatsAsync();
+
+            // 刷新当前选中的标签页数据
+            switch (SelectedTab)
+            {
+                case "在线用户":
+                    await ReloadOnlineUsersAsync();
+                    break;
+                case "所有用户":
+                    await LoadAllUsersAsync();
+                    break;
+                case "消息历史":
+                    await LoadRecentMessagesAsync();
+                    break;
+                case "好友关系":
+                    await LoadFriendshipsAsync();
+                    break;
+            }
+
+            SystemMessages += $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 数据刷新完成\n";
+        }
+        catch (Exception ex)
+        {
+            SystemMessages += $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 刷新数据失败: {ex.Message}\n";
+        }
+    }
+
+    [RelayCommand]
+    private async Task CreateBackupAsync()
+    {
+        var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+        try
+        {
+            SystemMessages += $"[{timestamp}] 开始创建数据库备份...\n";
+
+            if (_serviceProvider != null)
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var backupService = scope.ServiceProvider.GetService<DatabaseBackupService>();
+
+                if (backupService != null)
+                {
+                    // 强制垃圾回收，释放可能的数据库连接
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    GC.Collect();
+
+                    // 短暂延迟确保连接完全释放
+                    await Task.Delay(500);
+
+                    var backupPath = await backupService.CreateBackupAsync();
+                    LastBackupTime = $"最后备份: {DateTime.Now:MM-dd HH:mm}";
+                    SystemMessages += $"[{timestamp}] 备份创建成功: {Path.GetFileName(backupPath)}\n";
+                    SystemMessages += $"[{timestamp}] 备份位置: {backupPath}\n";
+                }
+                else
+                {
+                    SystemMessages += $"[{timestamp}] 错误: 备份服务未可用\n";
+                }
+            }
+            else
+            {
+                SystemMessages += $"[{timestamp}] 错误: 服务提供程序未初始化\n";
+            }
+        }
+        catch (Exception ex)
+        {
+            SystemMessages += $"[{timestamp}] 创建备份失败: {ex.Message}\n";
+
+            // 如果是文件被占用的错误，提供解决建议
+            if (ex.Message.Contains("being used by another process") ||
+                ex.Message.Contains("文件正在被另一个进程使用"))
+            {
+                SystemMessages += $"[{timestamp}] 建议: 请稍等片刻后重试，或重启服务器以释放文件锁定\n";
+            }
+
+            // 记录详细错误信息用于调试
+            Console.WriteLine($"Backup error details: {ex}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task OptimizeDatabaseAsync()
+    {
+        try
+        {
+            SystemMessages += $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 开始优化数据库...\n";
+
+            if (_serviceProvider != null)
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var maintenanceService = scope.ServiceProvider.GetService<DatabaseMaintenanceService>();
+
+                if (maintenanceService != null)
+                {
+                    await maintenanceService.OptimizeDatabaseAsync();
+                    SystemMessages += $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 数据库优化完成\n";
+                    await UpdateDashboardStatsAsync(); // 更新数据库大小
+                }
+                else
+                {
+                    SystemMessages += $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 错误: 维护服务未可用\n";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            SystemMessages += $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 数据库优化失败: {ex.Message}\n";
+        }
+    }
+
+    [RelayCommand]
+    private async Task CleanupDataAsync()
+    {
+        try
+        {
+            SystemMessages += $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 开始清理过期数据...\n";
+
+            if (_serviceProvider != null)
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var dataService = scope.ServiceProvider.GetService<DataService>();
+
+                if (dataService != null)
+                {
+                    var cleanedCount = await dataService.CleanupExpiredDataAsync();
+                    SystemMessages += $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 数据清理完成，删除了 {cleanedCount} 条过期记录\n";
+                    await UpdateServerStatsAsync(); // 更新统计信息
+                }
+                else
+                {
+                    SystemMessages += $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 错误: 数据服务未可用\n";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            SystemMessages += $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 数据清理失败: {ex.Message}\n";
+        }
+    }
+
+    // 更新仪表板统计信息
+    private async Task UpdateDashboardStatsAsync()
+    {
+        try
+        {
+            if (_serviceProvider == null) return;
+
+            using var scope = _serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ServerDbContext>();
+
+            // 更新在线用户数
+            var currentOnlineCount = await db.Users.CountAsync(u => u.Status == UserStatus.Online);
+            OnlineUsersCount = currentOnlineCount;
+
+            // 更新今日消息数
+            var today = DateTime.Today;
+            var todayMessageCount = await db.Messages.CountAsync(m => m.Timestamp >= today);
+            TodayMessagesCount = todayMessageCount;
+
+            // 更新服务器运行时间
+            var uptime = DateTime.Now - _serverStartTime;
+            ServerUptime = $"运行时间: {uptime.Days}天 {uptime.Hours:00}:{uptime.Minutes:00}";
+
+            // 更新当前时间
+            CurrentTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+            // 尝试获取数据库大小
+            try
+            {
+                var maintenanceService = scope.ServiceProvider.GetService<DatabaseMaintenanceService>();
+                if (maintenanceService != null)
+                {
+                    var healthReport = await maintenanceService.GenerateHealthReportAsync();
+                    DatabaseSize = healthReport.DatabaseSizeFormatted;
+                }
+            }
+            catch
+            {
+                // 如果获取失败，保持当前值
+            }
+        }
+        catch (Exception ex)
+        {
+            SystemMessages += $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 更新仪表板统计失败: {ex.Message}\n";
+        }
     }
 
     public void Dispose()

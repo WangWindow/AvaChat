@@ -1,4 +1,5 @@
 using AvaChat.Client.ViewModels;
+using Avalonia.Threading;
 
 namespace AvaChat.Client.Views;
 
@@ -28,7 +29,26 @@ public partial class ChatView : UserControl
         {
             Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
             {
-                MessageScrollViewer.ScrollToEnd();
+                // 延迟一帧确保UI更新完成
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    try
+                    {
+                        // 滚动到最大偏移量
+                        MessageScrollViewer.ScrollToEnd();
+
+                        // 备用方法：直接设置垂直偏移
+                        var maxOffset = MessageScrollViewer.ScrollBarMaximum.Y;
+                        if (maxOffset > 0)
+                        {
+                            MessageScrollViewer.Offset = new Vector(0, maxOffset);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[ChatView] 滚动到底部失败: {ex.Message}");
+                    }
+                }, DispatcherPriority.Background);
             });
         }
     }

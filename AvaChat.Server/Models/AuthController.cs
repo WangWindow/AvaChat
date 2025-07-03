@@ -19,18 +19,28 @@ public class AuthController(ServerDbContext db) : ControllerBase
             return Ok(new RegisterResponse { Success = false, Error = "用户名已存在" });
         }
 
-        string userId;
-        var rand = new Random();
-        do
+        string userId = SecurityService.GenerateUserId();
+        while (await _db.Users.AnyAsync(u => u.UserId == userId))
         {
-            userId = rand.Next(0, 100000000).ToString("D8");
-        } while (await _db.Users.AnyAsync(u => u.UserId == userId));
+            userId = SecurityService.GenerateUserId();
+        }
+
+        // 解密客户端传输的密码，存储明文
+        string plainPassword;
+        try
+        {
+            plainPassword = SecurityService.DecryptPassword(req.Password);
+        }
+        catch
+        {
+            return Ok(new RegisterResponse { Success = false, Error = "密码格式错误" });
+        }
 
         var user = new User
         {
             UserId = userId,
             UserName = req.UserName,
-            Password = req.Password,
+            Password = plainPassword, // 存储明文密码
         };
 
         _db.Users.Add(user);
@@ -47,7 +57,31 @@ public class AuthController(ServerDbContext db) : ControllerBase
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest req)
     {
         var user = await _db.Users.FirstOrDefaultAsync(u => u.UserId == req.UserId);
-        if (user == null || user.Password != req.Password)
+        if (user == null)
+        {
+            return Ok(new LoginResponse
+            {
+                Success = false,
+                Error = "用户ID或密码错误"
+            });
+        }
+
+        // 解密客户端传输的密码，与数据库中的明文密码比较
+        string plainPassword;
+        try
+        {
+            plainPassword = SecurityService.DecryptPassword(req.Password);
+        }
+        catch
+        {
+            return Ok(new LoginResponse
+            {
+                Success = false,
+                Error = "密码格式错误"
+            });
+        }
+
+        if (user.Password != plainPassword)
         {
             return Ok(new LoginResponse
             {

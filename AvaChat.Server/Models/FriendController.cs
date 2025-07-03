@@ -72,27 +72,15 @@ public class FriendController(ServerDbContext db, IHubContext<ChatHub> hubContex
             _db.FriendRequests.Add(friendRequest);
             Console.WriteLine($"[SendFriendRequest] 创建好友申请: FromUserId={req.FromUserId}, ToUserId={req.ToUserId}, FromUserName={fromUser.UserName}");
 
-            // 发送系统消息给申请发送者
-            var message = new Message
-            {
-                SenderId = "system",
-                ReceiverId = req.FromUserId,
-                Content = $"好友申请已发送给 {toUser.UserName}，请等待对方回应",
-                Timestamp = DateTime.UtcNow,
-                MessageType = MessageType.System,
-                Status = MessageStatus.Delivered
-            };
-
-            _db.Messages.Add(message);
             Console.WriteLine($"[SendFriendRequest] 准备保存到数据库");
             await _db.SaveChangesAsync();
             Console.WriteLine($"[SendFriendRequest] 成功保存到数据库");
 
-            // 如果用户在线，通过SignalR发送系统消息通知
+            // 使用私人系统消息方法发送通知
             try
             {
-                await _hubContext.Clients.Group(req.FromUserId).SendAsync("ReceiveSystemMessage", message);
-                Console.WriteLine($"[SendFriendRequest] 已通过SignalR发送通知");
+                await ChatHub.SendPrivateSystemMessage(_hubContext, _db, req.FromUserId, $"好友申请已发送给 {toUser.UserName}，请等待对方回应");
+                Console.WriteLine($"[SendFriendRequest] 已通过SignalR发送私人系统消息");
             }
             catch (Exception ex)
             {
@@ -188,44 +176,20 @@ public class FriendController(ServerDbContext db, IHubContext<ChatHub> hubContex
 
                 Console.WriteLine($"[HandleFriendRequest] 已添加好友关系到数据库");
 
-                // 给申请接受者发送消息
-                var messageToAcceptor = new Message
-                {
-                    SenderId = "system",
-                    ReceiverId = req.UserId,
-                    Content = $"您已与 {friendRequest.FromUserName} 成为好友",
-                    Timestamp = DateTime.UtcNow,
-                    MessageType = MessageType.System,
-                    Status = MessageStatus.Delivered
-                };
-
-                // 给申请发送者发送消息
-                var messageToSender = new Message
-                {
-                    SenderId = "system",
-                    ReceiverId = req.FromUserId,
-                    Content = $"{toUser.UserName} 已接受您的好友申请",
-                    Timestamp = DateTime.UtcNow,
-                    MessageType = MessageType.System,
-                    Status = MessageStatus.Delivered
-                };
-
-                _db.Messages.AddRange(messageToAcceptor, messageToSender);
-
                 Console.WriteLine($"[HandleFriendRequest] 准备保存到数据库");
                 await _db.SaveChangesAsync();
                 Console.WriteLine($"[HandleFriendRequest] 成功保存到数据库");
 
-                // 通过SignalR发送系统消息通知
+                // 通过私人系统消息发送通知
                 try
                 {
                     // 通知申请接收者
-                    await _hubContext.Clients.Group(req.UserId).SendAsync("ReceiveSystemMessage", messageToAcceptor);
+                    await ChatHub.SendPrivateSystemMessage(_hubContext, _db, req.UserId, $"您已与 {friendRequest.FromUserName} 成为好友");
 
                     // 通知申请发送者
-                    await _hubContext.Clients.Group(req.FromUserId).SendAsync("ReceiveSystemMessage", messageToSender);
+                    await ChatHub.SendPrivateSystemMessage(_hubContext, _db, req.FromUserId, $"{toUser.UserName} 已接受您的好友申请");
 
-                    Console.WriteLine($"[HandleFriendRequest] 已通过SignalR发送通知");
+                    Console.WriteLine($"[HandleFriendRequest] 已通过SignalR发送私人系统消息");
                 }
                 catch (Exception ex)
                 {
@@ -239,26 +203,14 @@ public class FriendController(ServerDbContext db, IHubContext<ChatHub> hubContex
                 // 拒绝好友申请
                 friendRequest.Status = FriendRequestStatus.Rejected;
 
-                var messageToSender = new Message
-                {
-                    SenderId = "system",
-                    ReceiverId = req.FromUserId,
-                    Content = $"{toUser.UserName} 已拒绝您的好友申请",
-                    Timestamp = DateTime.UtcNow,
-                    MessageType = MessageType.System,
-                    Status = MessageStatus.Delivered
-                };
-
-                _db.Messages.Add(messageToSender);
-
                 Console.WriteLine($"[HandleFriendRequest] 准备保存拒绝信息到数据库");
                 await _db.SaveChangesAsync();
                 Console.WriteLine($"[HandleFriendRequest] 成功保存拒绝信息到数据库");
 
-                // 通过SignalR发送系统消息通知
+                // 通过私人系统消息发送通知
                 try
                 {
-                    await _hubContext.Clients.Group(req.FromUserId).SendAsync("ReceiveSystemMessage", messageToSender);
+                    await ChatHub.SendPrivateSystemMessage(_hubContext, _db, req.FromUserId, $"{toUser.UserName} 已拒绝您的好友申请");
                     Console.WriteLine($"[HandleFriendRequest] 已通过SignalR发送拒绝通知");
                 }
                 catch (Exception ex)
