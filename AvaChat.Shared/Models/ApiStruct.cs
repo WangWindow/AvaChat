@@ -12,7 +12,7 @@ public class RegisterResponse
 {
     [JsonPropertyName("success")]
     public bool Success { get; set; }
-    [JsonPropertyName("userId")]
+    [JsonPropertyName("userId"), Required, StringLength(8)]
     public string? UserId { get; set; }
     [JsonPropertyName("error")]
     public string? Error { get; set; }
@@ -20,7 +20,7 @@ public class RegisterResponse
 
 public class LoginRequest
 {
-    [Required]
+    [Required, StringLength(8)]
     public string UserId { get; set; } = string.Empty;
     [Required]
     public string Password { get; set; } = string.Empty;
@@ -39,7 +39,7 @@ public class LoginResponse
 
 public class LogoutRequest
 {
-    [Required]
+    [Required, StringLength(8)]
     public string UserId { get; set; } = string.Empty;
 }
 
@@ -56,9 +56,9 @@ public class LogoutResponse
 
 public class SendMessageRequest
 {
-    [Required]
+    [Required, StringLength(8)]
     public string FromUserId { get; set; } = string.Empty;
-    [Required]
+    [Required, StringLength(8)]
     public string ToUserId { get; set; } = string.Empty;
     [Required]
     public string Content { get; set; } = string.Empty;
@@ -74,9 +74,9 @@ public class SendMessageResponse
 // 好友申请相关API结构
 public class AddFriendRequest
 {
-    [Required]
+    [Required, StringLength(8)]
     public string FromUserId { get; set; } = string.Empty;
-    [Required]
+    [Required, StringLength(8)]
     public string ToUserId { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty; // 申请消息
 }
@@ -91,9 +91,9 @@ public class AddFriendResponse
 
 public class HandleFriendRequestRequest
 {
-    [Required]
+    [Required, StringLength(8)]
     public string UserId { get; set; } = string.Empty;
-    [Required]
+    [Required, StringLength(8)]
     public string FromUserId { get; set; } = string.Empty;
     [Required]
     public bool Accept { get; set; } // true=接受，false=拒绝
@@ -122,12 +122,10 @@ public class FriendRequest
     [Key]
     public int RequestId { get; set; }
 
-    [JsonPropertyName("fromUserId")]
-    [Required, StringLength(8)]
+    [JsonPropertyName("fromUserId"), Required, StringLength(8)]
     public string FromUserId { get; set; } = string.Empty;
 
-    [JsonPropertyName("toUserId")]
-    [Required, StringLength(8)]
+    [JsonPropertyName("toUserId"), Required, StringLength(8)]
     public string ToUserId { get; set; } = string.Empty;
 
     [JsonPropertyName("fromUserName")]

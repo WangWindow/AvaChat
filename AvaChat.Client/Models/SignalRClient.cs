@@ -229,7 +229,29 @@ public class SignalRClient : IDisposable
     /// </summary>
     private static string NormalizeServerAddress(string addr)
     {
-        if (string.IsNullOrWhiteSpace(addr)) return "http://localhost:5000";
+        if (string.IsNullOrWhiteSpace(addr))
+        {
+            // 从数据库中加载服务器地址
+            try
+            {
+                var factory = new ClientDbContextFactory();
+                using var db = factory.CreateDbContext([]);
+                var serverSetting = db.ClientSettings.FirstOrDefault(s => s.Key == "ServerAddress");
+                if (serverSetting != null && !string.IsNullOrEmpty(serverSetting.Value))
+                {
+                    addr = serverSetting.Value;
+                }
+                else
+                {
+                    return "http://localhost:5000";
+                }
+            }
+            catch
+            {
+                return "http://localhost:5000";
+            }
+        }
+
         if (!addr.StartsWith("http://") && !addr.StartsWith("https://"))
             return "http://" + addr;
         return addr;

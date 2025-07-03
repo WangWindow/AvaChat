@@ -2,10 +2,6 @@ namespace AvaChat.Shared.Models;
 
 public class Friendship
 {
-    [Key]
-    [JsonPropertyName("friendshipId")]
-    public int FriendshipId { get; set; }
-
     [Required, StringLength(8)]
     [JsonPropertyName("userId")]
     public string UserId { get; set; } = string.Empty;

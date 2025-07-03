@@ -14,7 +14,7 @@ public partial class LoginViewModel : ViewModelBase
     private bool _rememberCredentials = false;
 
     [ObservableProperty]
-    private string _serverAddress = "localhost:5000";
+    private string _serverAddress = string.Empty;
 
     [ObservableProperty]
     private bool _isPasswordVisible = false;
@@ -77,6 +77,9 @@ public partial class LoginViewModel : ViewModelBase
             return;
         }
 
+        // 在登录前重新加载服务器地址设置
+        ReloadServerAddress();
+
         // 显示登录状态窗口
         var statusWindow = new LoginStatusWindow();
         var statusViewModel = new LoginStatusViewModel();
@@ -111,10 +114,8 @@ public partial class LoginViewModel : ViewModelBase
             var resp = await api.LoginAsync(UserId, Password) ?? throw new Exception("无法连接服务器");
             if (resp.Success)
             {
-                await statusViewModel.ShowSuccessAsync();
-
-                // 保存登录信息
-                SaveCredentials(RememberCredentials);
+                // 保存登录信息（包括用户名）
+                SaveCredentials(RememberCredentials, resp.UserName);
 
                 // 登录成功后进行数据同步
                 bool syncSuccess = true;
@@ -132,27 +133,79 @@ public partial class LoginViewModel : ViewModelBase
                 // 设置全局登录状态，刷新托盘菜单
                 App.OnUserLogin(UserId, ServerAddress, resp.UserName);
 
-                // 打开主窗口
-                var mainWindow = new MainWindow
+                // 显示成功状态并等待完成
+                await statusViewModel.ShowSuccessAsync();
+
+                // 在UI线程上执行窗口切换操作
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
                 {
-                    DataContext = new MainWindowViewModel()
-                };
+                    try
+                    {
+                        Console.WriteLine("[LoginViewModel] 开始窗口切换操作");
 
-                // 设置为应用程序的主窗口
-                if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-                {
-                    desktop.MainWindow = mainWindow;
-                }
+                        // 关闭状态窗口
+                        statusWindow.Close();
+                        Console.WriteLine("[LoginViewModel] 状态窗口已关闭");
 
-                mainWindow.Show();
+                        // 检查当前窗口状态
+                        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                        {
+                            Console.WriteLine($"[LoginViewModel] 当前窗口数量: {desktop.Windows.Count}");
+                            foreach (var window in desktop.Windows)
+                            {
+                                Console.WriteLine($"[LoginViewModel] 窗口类型: {window.GetType().Name}, 标题: {window.Title}");
+                            }
+                        }
 
-                // 关闭登录窗口
-                CloseCurrentLoginWindow();
+                        // 创建主窗口（在关闭登录窗口之前创建）
+                        var mainWindow = new MainWindow
+                        {
+                            DataContext = new MainWindowViewModel()
+                        };
+                        Console.WriteLine("[LoginViewModel] 主窗口已创建");
+
+                        // 设置为应用程序的主窗口
+                        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop2)
+                        {
+                            desktop2.MainWindow = mainWindow;
+                            Console.WriteLine("[LoginViewModel] 主窗口已设置为应用主窗口");
+                        }
+
+                        // 显示主窗口
+                        mainWindow.Show();
+                        Console.WriteLine("[LoginViewModel] 主窗口已调用Show()");
+
+                        // 现在关闭登录窗口
+                        CloseCurrentLoginWindow();
+
+                        // 等待一小段时间确保窗口切换完成
+                        await Task.Delay(200);
+
+                        // 确保窗口可见并激活
+                        mainWindow.WindowState = WindowState.Normal;
+                        mainWindow.Activate();
+                        Console.WriteLine("[LoginViewModel] 主窗口已激活");
+
+                        // 临时注释掉可能引起问题的置顶操作
+                        // mainWindow.Topmost = true;
+                        // await Task.Delay(100);
+                        // mainWindow.Topmost = false;
+
+                        Console.WriteLine("[LoginViewModel] 主窗口切换完成");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[LoginViewModel] 窗口切换过程中出错: {ex.Message}");
+                        // 如果出错，至少确保登录窗口不会关闭
+                    }
+                });
 
                 // 如同步失败可弹窗提示（可选）
                 if (!syncSuccess)
                 {
-                    statusViewModel.ShowError("同步失败", "部分数据未能从云端同步，已使用本地缓存。");
+                    // 在主窗口显示后再显示错误提示
+                    await Task.Delay(500);
+                    ShowErrorDialog("同步失败", "部分数据未能从云端同步，已使用本地缓存。");
                 }
             }
             else
@@ -169,6 +222,7 @@ public partial class LoginViewModel : ViewModelBase
     [RelayCommand]
     private void Register()
     {
+        ReloadServerAddress();
         var statusWindow = new LoginStatusWindow();
         var statusViewModel = new LoginStatusViewModel();
         statusWindow.DataContext = statusViewModel;
@@ -191,6 +245,9 @@ public partial class LoginViewModel : ViewModelBase
     [RelayCommand]
     private void ServerSettings()
     {
+        // 重新加载服务器地址以显示当前设置
+        ReloadServerAddress();
+
         var statusWindow = new LoginStatusWindow();
         var statusViewModel = new LoginStatusViewModel();
         statusWindow.DataContext = statusViewModel;
@@ -243,8 +300,53 @@ public partial class LoginViewModel : ViewModelBase
 
     private void CloseCurrentLoginWindow()
     {
-        var loginWindow = GetCurrentLoginWindow();
-        loginWindow?.Close();
+        try
+        {
+            var loginWindow = GetCurrentLoginWindow();
+            if (loginWindow != null)
+            {
+                Console.WriteLine("[LoginViewModel] 关闭登录窗口");
+                loginWindow.Close();
+            }
+            else
+            {
+                Console.WriteLine("[LoginViewModel] 未找到登录窗口");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[LoginViewModel] 关闭登录窗口时出错: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 重新从数据库加载服务器地址
+    /// </summary>
+    private void ReloadServerAddress()
+    {
+        try
+        {
+            var factory = new ClientDbContextFactory();
+            using var db = factory.CreateDbContext([]);
+
+            // 重新加载服务器地址设置
+            var serverSetting = db.ClientSettings.FirstOrDefault(s => s.Key == "ServerAddress");
+            if (serverSetting != null && !string.IsNullOrEmpty(serverSetting.Value))
+            {
+                ServerAddress = serverSetting.Value;
+                Console.WriteLine($"[LoginViewModel] 重新加载服务器地址: {ServerAddress}");
+            }
+            else
+            {
+                ServerAddress = "localhost:5000";
+                Console.WriteLine($"[LoginViewModel] 使用默认服务器地址: {ServerAddress}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[LoginViewModel] 加载服务器地址失败: {ex.Message}");
+            ServerAddress = "localhost:5000";
+        }
     }
 
 
@@ -260,6 +362,10 @@ public partial class LoginViewModel : ViewModelBase
             if (serverSetting != null && !string.IsNullOrEmpty(serverSetting.Value))
             {
                 ServerAddress = serverSetting.Value;
+            }
+            else
+            {
+                ServerAddress = "localhost:5000";
             }
 
             // 加载"记住密码"勾选框状态
@@ -278,6 +384,7 @@ public partial class LoginViewModel : ViewModelBase
             {
                 UserId = info.UserId,
                 Password = info.Password,
+                UserName = info.UserName,
                 LoginTime = info.LoginTime
             }).ToList();
 
@@ -290,12 +397,28 @@ public partial class LoginViewModel : ViewModelBase
         catch { /* 忽略异常 */ }
     }
 
-    private void SaveCredentials(bool isSavePassword)
+    private void SaveCredentials(bool isSavePassword, string? userName = null)
     {
         try
         {
             var factory = new ClientDbContextFactory();
             using var db = factory.CreateDbContext([]);
+
+            // 保存当前的服务器地址设置
+            var serverSetting = db.ClientSettings.FirstOrDefault(s => s.Key == "ServerAddress");
+            if (serverSetting != null)
+            {
+                serverSetting.Value = ServerAddress;
+                db.ClientSettings.Update(serverSetting);
+            }
+            else
+            {
+                db.ClientSettings.Add(new ClientSetting
+                {
+                    Key = "ServerAddress",
+                    Value = ServerAddress
+                });
+            }
 
             // 保存"记住密码"勾选框状态
             var rememberSetting = db.ClientSettings.FirstOrDefault(s => s.Key == "RememberCredentials");
@@ -323,6 +446,7 @@ public partial class LoginViewModel : ViewModelBase
             {
                 UserId = UserId,
                 Password = isSavePassword ? Password : null,
+                UserName = userName,
                 LoginTime = DateTime.Now
             };
             db.LoginInfos.Add(info);

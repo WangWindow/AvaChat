@@ -31,8 +31,7 @@ public class ClientDbContext(DbContextOptions<ClientDbContext> options) : DbCont
 
         modelBuilder
             .Entity<Friendship>()
-            .HasIndex(f => new { f.UserId, f.FriendUserId })
-            .IsUnique();
+            .HasKey(f => new { f.UserId, f.FriendUserId });
 
         modelBuilder
             .Entity<Message>()

@@ -82,15 +82,24 @@
                     <AutoCompleteBox.ItemTemplate>
                         <DataTemplate x:DataType="models:LoginInfo">
                             <Grid ColumnDefinitions="*,Auto" ToolTip.Tip="{Binding LoginTime, StringFormat='最后登录时间: {0:yyyy-MM-dd HH:mm:ss}'}">
-                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <StackPanel
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    Spacing="8">
                                     <TextBlock
                                         FontSize="14"
                                         FontWeight="SemiBold"
                                         Text="{Binding UserId}" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                        IsVisible="{Binding UserName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                        Text="{Binding UserName}" />
                                 </StackPanel>
                                 <Border
                                     Grid.Column="1"
-                                    Background="{DynamicResource SystemControlHighlightAccentBrush}"
+                                    Background="Transparent"
                                     CornerRadius="10"
                                     IsVisible="{Binding HasSavedPassword}">
                                     <TextBlock

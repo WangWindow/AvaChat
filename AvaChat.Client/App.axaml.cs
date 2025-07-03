@@ -15,6 +15,8 @@ public partial class App : Application
 
     public static async void OnUserLogin(string userId, string serverAddress, string? userName = null)
     {
+        Console.WriteLine($"[App.OnUserLogin] 用户登录: UserId={userId}, ServerAddress={serverAddress}, UserName={userName}");
+
         CurrentUserId = userId;
         CurrentServerAddress = serverAddress;
         CurrentUserName = userName;
@@ -36,6 +38,8 @@ public partial class App : Application
         {
             Console.WriteLine($"[App] SignalR连接失败: {ex.Message}");
         }
+
+        Console.WriteLine($"[App.OnUserLogin] 当前全局状态: CurrentUserId={CurrentUserId}, CurrentServerAddress={CurrentServerAddress}");
     }
 
     public static async Task OnUserLogout()
@@ -106,6 +110,14 @@ public partial class App : Application
                 setMenu.Menu = sub;
                 menu.Add(setMenu);
             }
+            else
+            {
+                // 未登录时，在右键菜单中显示主题切换选项
+                var themeItem = new NativeMenuItem("主题切换");
+                themeItem.Click += app.ThemeSwitch_Click;
+                menu.Add(themeItem);
+            }
+
             menu.Add(new NativeMenuItemSeparator());
 
             var exitItem = new NativeMenuItem("退出");
@@ -130,6 +142,9 @@ public partial class App : Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            // 设置应用程序关闭模式，防止关闭最后一个窗口时自动退出
+            desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit.
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
@@ -146,7 +161,14 @@ public partial class App : Application
             {
                 Icon = Current!.Resources["AppTrayIcon"] as WindowIcon ?? throw new NullReferenceException("AppTrayIcon 资源未找到或类型错误"),
                 ToolTipText = "AvaChat",
+                IsVisible = true
             };
+
+            // 添加TrayIcon点击事件
+            MainTrayIcon.Clicked += OnTrayIconClicked;
+
+            // 确保托盘图标显示
+            UpdateTrayIcon();
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -173,6 +195,14 @@ public partial class App : Application
     }
 
     #region 托盘图标事件处理
+
+    /// <summary>
+    /// 托盘图标点击事件 - 显示当前窗口
+    /// </summary>
+    private void OnTrayIconClicked(object? sender, EventArgs e)
+    {
+        ShowWindow_Click(sender, e);
+    }
 
     /// <summary>
     /// 显示主窗口

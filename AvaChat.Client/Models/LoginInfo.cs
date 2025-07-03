@@ -5,15 +5,16 @@ namespace AvaChat.Client.Models;
 
 public class LoginInfo
 {
-    [Key, Required, MaxLength(32)]
+    [Key, Required, MaxLength(8), MinLength(8)]
     public string UserId { get; set; } = string.Empty;
 
     [MaxLength(128)]
     public string? Password { get; set; }
 
-    public DateTime LoginTime { get; set; }
+    [MaxLength(64)]
+    public string? UserName { get; set; }
 
-    public string DisplayText => $"{UserId} ({LoginTime:MM-dd HH:mm})";
+    public DateTime LoginTime { get; set; }
 
     public bool HasSavedPassword => !string.IsNullOrEmpty(Password);
 }

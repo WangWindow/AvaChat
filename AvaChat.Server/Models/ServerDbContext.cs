@@ -31,8 +31,7 @@ public class ServerDbContext(DbContextOptions<ServerDbContext> options) : DbCont
 
         modelBuilder
             .Entity<Friendship>()
-            .HasIndex(f => new { f.UserId, f.FriendUserId })
-            .IsUnique();
+            .HasKey(f => new { f.UserId, f.FriendUserId });
 
         modelBuilder.Entity<FriendRequest>()
             .HasIndex(f => new { f.FromUserId, f.ToUserId })

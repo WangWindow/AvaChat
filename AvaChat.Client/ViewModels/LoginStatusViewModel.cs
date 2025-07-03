@@ -39,7 +39,7 @@ public partial class LoginStatusViewModel : ObservableObject
 
     // 服务器设置相关
     [ObservableProperty]
-    private string _serverAddress = "localhost:5000";
+    private string _serverAddress = string.Empty;
 
     [ObservableProperty]
     private string _serverSettingsError = string.Empty;
@@ -56,6 +56,34 @@ public partial class LoginStatusViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _showServerSettingsPanel = false;
+
+    public LoginStatusViewModel()
+    {
+        // 从数据库加载服务器地址
+        LoadServerAddress();
+    }
+
+    private void LoadServerAddress()
+    {
+        try
+        {
+            var factory = new ClientDbContextFactory();
+            using var db = factory.CreateDbContext([]);
+            var serverSetting = db.ClientSettings.FirstOrDefault(s => s.Key == "ServerAddress");
+            if (serverSetting != null && !string.IsNullOrEmpty(serverSetting.Value))
+            {
+                ServerAddress = serverSetting.Value;
+            }
+            else
+            {
+                ServerAddress = "localhost:5000";
+            }
+        }
+        catch
+        {
+            ServerAddress = "localhost:5000";
+        }
+    }
 
     /// <summary>
     /// 窗口关闭事件
@@ -96,9 +124,8 @@ public partial class LoginStatusViewModel : ObservableObject
         ShowRetryButton = false;
         HasErrorDetail = false;
 
-        // 1秒后自动关闭
+        // 显示成功状态1秒后返回，不自动关闭窗口
         await Task.Delay(1000);
-        WindowCloseRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>

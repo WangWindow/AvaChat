@@ -133,44 +133,66 @@
                     <!--  输入框  -->
                     <Border
                         Grid.Column="0"
-                        Padding="16,8"
+                        Padding="16,12"
                         Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
                         BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-                        BorderThickness="1"
-                        CornerRadius="20">
+                        BorderThickness="1.5"
+                        BoxShadow="0 2 8 #20000000"
+                        CornerRadius="24">
                         <TextBox
-                            MaxHeight="100"
+                            MaxHeight="120"
+                            VerticalContentAlignment="Center"
                             AcceptsReturn="True"
                             Background="Transparent"
                             BorderThickness="0"
                             FontSize="14"
+                            LineHeight="20"
                             Text="{Binding MessageText}"
                             TextWrapping="Wrap"
                             Watermark="输入消息... (Enter换行，Ctrl+Enter发送)">
                             <TextBox.KeyBindings>
                                 <KeyBinding Command="{Binding SendMessageCommand}" Gesture="Ctrl+Return" />
                             </TextBox.KeyBindings>
+                            <TextBox.Styles>
+                                <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+                                    <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightAccentBrush}" />
+                                    <Setter Property="BorderThickness" Value="2" />
+                                </Style>
+                            </TextBox.Styles>
                         </TextBox>
                     </Border>
 
                     <!--  发送按钮  -->
                     <Button
                         Grid.Column="1"
-                        Width="40"
-                        Height="40"
+                        Width="48"
+                        Height="48"
                         Margin="12,0,0,0"
                         HorizontalContentAlignment="Center"
                         VerticalContentAlignment="Center"
                         Background="{DynamicResource SystemControlHighlightAccentBrush}"
                         Command="{Binding SendMessageCommand}"
-                        CornerRadius="20"
+                        CornerRadius="24"
                         IsEnabled="{Binding !IsSending}"
                         ToolTip.Tip="发送消息">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource SystemControlHighlightAccentBrush}" />
+                                <Setter Property="Opacity" Value="0.9" />
+                            </Style>
+                            <Style Selector="Button:pressed">
+                                <Setter Property="Opacity" Value="0.7" />
+                            </Style>
+                            <Style Selector="Button:disabled">
+                                <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+                                <Setter Property="Opacity" Value="0.6" />
+                            </Style>
+                        </Button.Styles>
                         <Grid>
                             <!--  发送图标  -->
                             <Path
-                                Width="16"
-                                Height="16"
+                                Width="20"
+                                Height="20"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
                                 Data="M3.78963301,2.77233335 L24.8609339,12.8499121 C25.4837277,13.1477699 25.7471402,13.8941055 25.4492823,14.5168992 C25.326107,14.7744476 25.1184823,14.9820723 24.8609339,15.1052476 L3.78963301,25.1828263 C3.16683929,25.4806842 2.42050372,25.2172716 2.12264586,24.5944779 C1.99321184,24.3238431 1.96542524,24.015685 2.04435886,23.7262618 L4.7030903,13.9775798 L2.04435886,4.22889788 C1.8627142,3.56286745 2.25538645,2.87569101 2.92141688,2.69404635 C3.21084015,2.61511273 3.51899823,2.64289932 3.78963301,2.77233335 Z M3.63522914,4.36121177 L6.058,13.249 L17,13.25 C17.3796958,13.25 17.693491,13.5321539 17.7431534,13.8982294 L17.75,14 C17.75,14.3796958 17.4678461,14.693491 17.1017706,14.7431534 L17,14.75 L6.046,14.749 L3.63522914,23.5939479 L23.7421805,13.9775798 L3.63522914,4.36121177 Z"
@@ -178,19 +200,21 @@
                                 IsVisible="{Binding !IsSending}" />
 
                             <!--  发送中动画  -->
-                            <Border
-                                Width="16"
-                                Height="16"
-                                Background="White"
-                                CornerRadius="8"
-                                IsVisible="{Binding IsSending}">
-                                <Border.RenderTransform>
+                            <Ellipse
+                                Width="20"
+                                Height="20"
+                                Fill="Transparent"
+                                IsVisible="{Binding IsSending}"
+                                Stroke="White"
+                                StrokeDashArray="12,4"
+                                StrokeThickness="2">
+                                <Ellipse.RenderTransform>
                                     <RotateTransform />
-                                </Border.RenderTransform>
-                                <Border.Styles>
-                                    <Style Selector="Border">
+                                </Ellipse.RenderTransform>
+                                <Ellipse.Styles>
+                                    <Style Selector="Ellipse">
                                         <Style.Animations>
-                                            <Animation IterationCount="Infinite" Duration="0:0:1">
+                                            <Animation IterationCount="Infinite" Duration="0:0:1.2">
                                                 <KeyFrame Cue="0%">
                                                     <Setter Property="(RotateTransform.Angle)" Value="0" />
                                                 </KeyFrame>
@@ -200,8 +224,8 @@
                                             </Animation>
                                         </Style.Animations>
                                     </Style>
-                                </Border.Styles>
-                            </Border>
+                                </Ellipse.Styles>
+                            </Ellipse>
                         </Grid>
                     </Button>
                 </Grid>

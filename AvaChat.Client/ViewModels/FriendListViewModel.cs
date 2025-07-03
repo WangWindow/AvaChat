@@ -90,7 +90,9 @@ public partial class FriendListViewModel : ViewModelBase
     [RelayCommand]
     public async Task RefreshAsync()
     {
+        Console.WriteLine("[FriendListViewModel] 刷新好友列表开始");
         await LoadFriendsAsync();
+        Console.WriteLine("[FriendListViewModel] 刷新好友列表完成");
     }
 
     private async Task LoadFriendsAsync()
@@ -101,8 +103,11 @@ public partial class FriendListViewModel : ViewModelBase
             var userId = App.CurrentUserId;
             var serverAddress = App.CurrentServerAddress;
 
+            Console.WriteLine($"[LoadFriendsAsync] 开始加载好友列表 - UserId: {userId}, ServerAddress: {serverAddress}");
+
             if (string.IsNullOrEmpty(userId))
             {
+                Console.WriteLine("[LoadFriendsAsync] 用户未登录，清空好友列表");
                 Friends = [];
                 FilteredFriends = [];
                 IsLoading = false;
@@ -114,20 +119,31 @@ public partial class FriendListViewModel : ViewModelBase
             {
                 try
                 {
+                    Console.WriteLine("[LoadFriendsAsync] 正在从服务器同步好友数据...");
                     var api = new ApiService(serverAddress);
                     var serverFriends = await api.GetFriendshipsAsync(userId);
                     if (serverFriends != null)
                     {
+                        Console.WriteLine($"[LoadFriendsAsync] 从服务器同步了 {serverFriends.Count} 个好友关系");
                         // 数据已在ApiService中同步到本地数据库
+                    }
+                    else
+                    {
+                        Console.WriteLine("[LoadFriendsAsync] 服务器返回的好友数据为空");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[LoadFriendsAsync] Failed to sync from server: {ex.Message}");
+                    Console.WriteLine($"[LoadFriendsAsync] 从服务器同步失败: {ex.Message}");
                 }
+            }
+            else
+            {
+                Console.WriteLine("[LoadFriendsAsync] 服务器地址为空，跳过服务器同步");
             }
 
             // 从本地数据库加载好友列表
+            Console.WriteLine("[LoadFriendsAsync] 正在从本地数据库加载好友列表...");
             var factory = new ClientDbContextFactory();
             using var db = factory.CreateDbContext([]);
 
@@ -135,6 +151,8 @@ public partial class FriendListViewModel : ViewModelBase
                 .Where(f => f.UserId == userId)
                 .OrderBy(f => f.FriendUserId)
                 .ToList());
+
+            Console.WriteLine($"[LoadFriendsAsync] 从本地数据库加载了 {friendships.Count} 个好友关系");
 
             // 手动加载好友用户信息
             foreach (var friendship in friendships)
@@ -145,6 +163,7 @@ public partial class FriendListViewModel : ViewModelBase
                 if (friendUser != null)
                 {
                     friendship.FriendUser = friendUser;
+                    Console.WriteLine($"[LoadFriendsAsync] 加载好友用户信息: {friendUser.UserName} ({friendUser.UserId})");
                 }
                 else
                 {
@@ -156,11 +175,14 @@ public partial class FriendListViewModel : ViewModelBase
                         Status = UserStatus.Offline,
                         LastLoginTime = DateTime.MinValue
                     };
+                    Console.WriteLine($"[LoadFriendsAsync] 创建默认好友用户信息: {friendship.FriendUserId}");
                 }
             }
 
+            Console.WriteLine($"[LoadFriendsAsync] 准备更新UI，好友数量: {friendships.Count}");
             Friends = new ObservableCollection<Friendship>(friendships);
             FilterFriends();
+            Console.WriteLine($"[LoadFriendsAsync] UI更新完成，显示好友数量: {FilteredFriends.Count}");
         }
         catch (Exception ex)
         {

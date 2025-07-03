@@ -31,17 +31,27 @@ public class SyncController(ServerDbContext db) : ControllerBase
     [HttpGet("friends")] // /api/sync/friends?userId=xxxx
     public async Task<ActionResult<List<Friendship>>> GetFriends([FromQuery] string userId)
     {
+        Console.WriteLine($"[GetFriends] 开始获取用户好友关系，UserId: {userId}");
+
         var friends = await _db.Friendships
             .Where(f => f.UserId == userId)
             .ToListAsync();
+
+        Console.WriteLine($"[GetFriends] 从数据库查询到 {friends.Count} 个好友关系");
+
+        // 输出每个好友关系的详细信息
+        for (int i = 0; i < friends.Count; i++)
+        {
+            var f = friends[i];
+            Console.WriteLine($"[GetFriends] 好友关系 {i}: UserId='{f.UserId}', FriendUserId='{f.FriendUserId}', CreatedAt={f.CreatedAt}");
+        }
 
         var result = new List<Friendship>();
         foreach (var f in friends)
         {
             var friendUser = await _db.Users.FirstOrDefaultAsync(u => u.UserId == f.FriendUserId);
-            result.Add(new Friendship
+            var friendship = new Friendship
             {
-                FriendshipId = f.FriendshipId,
                 UserId = f.UserId,
                 FriendUserId = f.FriendUserId,
                 CreatedAt = f.CreatedAt,
@@ -52,8 +62,20 @@ public class SyncController(ServerDbContext db) : ControllerBase
                     Status = friendUser.Status,
                     LastLoginTime = friendUser.LastLoginTime
                 } : null
-            });
+            };
+            result.Add(friendship);
+
+            if (friendUser != null)
+            {
+                Console.WriteLine($"[GetFriends] 加载好友用户信息: {friendUser.UserName} ({friendUser.UserId})");
+            }
+            else
+            {
+                Console.WriteLine($"[GetFriends] 未找到好友用户信息: {f.FriendUserId}");
+            }
         }
+
+        Console.WriteLine($"[GetFriends] 准备返回 {result.Count} 个好友关系");
         return Ok(result);
     }
 
@@ -98,7 +120,6 @@ public class SyncController(ServerDbContext db) : ControllerBase
                 var friendUser = await _db.Users.FirstOrDefaultAsync(u => u.UserId == f.FriendUserId);
                 friendships.Add(new Friendship
                 {
-                    FriendshipId = f.FriendshipId,
                     UserId = f.UserId,
                     FriendUserId = f.FriendUserId,
                     CreatedAt = f.CreatedAt,

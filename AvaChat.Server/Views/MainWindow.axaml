@@ -358,7 +358,7 @@
 
                             <!--  操作按钮  -->
                             <StackPanel Orientation="Horizontal" Spacing="5">
-                                <Button
+                                <!-- <Button
                                     Padding="8,4"
                                     Background="{DynamicResource SystemControlHighlightAccentBrush}"
                                     Command="{Binding KickUserCommand}"
@@ -366,7 +366,7 @@
                                     FontSize="10"
                                     Foreground="White"
                                     IsEnabled="{Binding SelectedUser}"
-                                    IsVisible="{Binding IsOnlineUsersTabSelected}" />
+                                    IsVisible="{Binding IsOnlineUsersTabSelected}" />-->
 
                                 <Button
                                     Padding="8,4"
